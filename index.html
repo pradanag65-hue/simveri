@@ -4,168 +4,490 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SIMVERI – Sistem Verifikasi Subsidi TransJogja</title>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{
-  --primary:#0f4c75;--primary-light:#1b6ca8;--accent:#f97316;--accent-soft:#fff3e8;
-  --success:#16a34a;--success-soft:#dcfce7;--danger:#dc2626;--danger-soft:#fee2e2;
-  --warn:#d97706;--warn-soft:#fef3c7;--bg:#f0f4f8;--surface:#fff;--surface2:#f8fafc;
-  --border:#dde3ec;--text:#0f172a;--text-secondary:#64748b;--text-muted:#94a3b8;
-  --sidebar-w:260px;--header-h:60px;--radius:10px;
-  --shadow:0 1px 4px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.05);
-  --shadow-lg:0 8px 32px rgba(0,0,0,.12);
+:root {
+  --bg: #eef0f8;
+  --bg2: #e8eaf5;
+  --glass: rgba(255,255,255,0.72);
+  --glass2: rgba(255,255,255,0.5);
+  --glass-border: rgba(255,255,255,0.9);
+  --glass-shadow: 0 8px 32px rgba(100,100,200,0.10), 0 2px 8px rgba(100,100,200,0.07);
+  --glass-shadow-lg: 0 20px 60px rgba(100,100,200,0.16), 0 4px 16px rgba(100,100,200,0.10);
+  --purple: #7c6ff7;
+  --purple-dark: #5a4fcf;
+  --purple-light: #a89df8;
+  --blue: #5b8dee;
+  --blue-light: #8bb4f4;
+  --accent: #f97316;
+  --green: #22c55e;
+  --red: #ef4444;
+  --text: #1e1b4b;
+  --text2: #6b6fa8;
+  --text3: #9ca3d4;
+  --sidebar-w: 72px;
+  --header-h: 0px;
+  --radius: 20px;
+  --radius-sm: 12px;
 }
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Outfit', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  overflow-x: hidden;
+}
 
-/* HEADER */
-.app-header{position:fixed;top:0;left:0;right:0;height:var(--header-h);background:var(--primary);color:#fff;display:flex;align-items:center;padding:0 20px;z-index:100;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
-.logo-icon{width:36px;height:36px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
-.logo-text{font-weight:800;font-size:17px;letter-spacing:-.3px}
-.logo-sub{font-size:10px;opacity:.7}
-.header-meta{font-size:12px;opacity:.8;text-align:right}
-.header-meta strong{display:block;font-size:13px;opacity:1}
-.conn-badge{display:flex;align-items:center;gap:5px;font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600}
-.conn-badge.ok{background:rgba(22,163,74,.2);color:#86efac}
-.conn-badge.err{background:rgba(220,38,38,.2);color:#fca5a5}
-.conn-badge.loading{background:rgba(255,255,255,.1);color:rgba(255,255,255,.6)}
+/* BG BLOBS */
+body::before {
+  content: '';
+  position: fixed;
+  top: -200px; left: -200px;
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(124,111,247,0.18) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+body::after {
+  content: '';
+  position: fixed;
+  bottom: -150px; right: -100px;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(91,141,238,0.15) 0%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
 
 /* SIDEBAR */
-.app-sidebar{position:fixed;top:var(--header-h);left:0;bottom:0;width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;z-index:90;padding:16px 0}
-.nav-section{padding:0 12px 8px}
-.nav-label{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.8px;padding:8px 8px 4px}
-.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;cursor:pointer;transition:all .15s;color:var(--text-secondary);font-weight:500;font-size:13.5px;margin:1px 0}
-.nav-item:hover{background:var(--bg);color:var(--primary)}
-.nav-item.active{background:#e8f1fb;color:var(--primary);font-weight:600}
-.nav-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
-.nav-divider{height:1px;background:var(--border);margin:8px 12px}
+.sidebar {
+  position: fixed; top: 0; left: 0; bottom: 0;
+  width: var(--sidebar-w);
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  border-right: 1px solid var(--glass-border);
+  display: flex; flex-direction: column; align-items: center;
+  padding: 20px 0; gap: 6px;
+  z-index: 100;
+  box-shadow: 4px 0 24px rgba(100,100,200,0.08);
+}
+.sidebar-logo {
+  width: 42px; height: 42px;
+  background: linear-gradient(135deg, var(--purple), var(--blue));
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 16px rgba(124,111,247,0.4);
+}
+.sidebar-spacer { flex: 1; }
+.nav-btn {
+  width: 46px; height: 46px;
+  border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+  color: var(--text2);
+  border: none; background: transparent;
+}
+.nav-btn:hover { background: rgba(124,111,247,0.12); color: var(--purple); }
+.nav-btn.active {
+  background: linear-gradient(135deg, var(--purple), var(--blue));
+  box-shadow: 0 4px 16px rgba(124,111,247,0.45);
+  color: #fff;
+}
+.nav-btn .tooltip {
+  position: absolute; left: 56px; top: 50%; transform: translateY(-50%);
+  background: var(--text); color: #fff; font-size: 11px; font-weight: 600;
+  padding: 5px 10px; border-radius: 8px; white-space: nowrap;
+  opacity: 0; pointer-events: none; transition: opacity 0.15s;
+}
+.nav-btn:hover .tooltip { opacity: 1; }
 
 /* MAIN */
-.app-main{margin-left:var(--sidebar-w);margin-top:var(--header-h);padding:24px;min-height:calc(100vh - var(--header-h))}
-.page-title{font-size:22px;font-weight:800;letter-spacing:-.5px}
-.page-sub{color:var(--text-secondary);font-size:13px;margin-top:3px}
-.page-actions{display:flex;gap:8px;margin-top:14px;align-items:center;flex-wrap:wrap}
+.main {
+  margin-left: var(--sidebar-w);
+  padding: 28px 28px 28px;
+  min-height: 100vh;
+  position: relative; z-index: 1;
+}
 
-/* CARDS */
-.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);border:1px solid var(--border);margin-bottom:16px}
-.card-header{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
-.card-title{font-weight:700;font-size:14px}
-.card-body{padding:18px}
-.card-footer{padding:12px 18px;border-top:1px solid var(--border);background:var(--surface2);border-radius:0 0 var(--radius) var(--radius);display:flex;gap:8px;justify-content:flex-end}
+/* TOP BAR */
+.topbar {
+  display: flex; align-items: center; gap: 16px; margin-bottom: 28px;
+}
+.topbar-greeting { flex: 1; }
+.topbar-greeting h1 { font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
+.topbar-greeting p { font-size: 13px; color: var(--text2); margin-top: 2px; }
+.topbar-search {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--glass); backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  border-radius: 30px; padding: 9px 16px;
+  box-shadow: var(--glass-shadow);
+  width: 220px;
+}
+.topbar-search input { border: none; background: transparent; font-family: inherit; font-size: 13px; color: var(--text); outline: none; width: 100%; }
+.topbar-search input::placeholder { color: var(--text3); }
+.topbar-actions { display: flex; gap: 8px; align-items: center; }
+.icon-btn {
+  width: 38px; height: 38px; border-radius: 12px;
+  background: var(--glass); backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 16px; transition: all 0.2s;
+  box-shadow: var(--glass-shadow);
+}
+.icon-btn:hover { background: rgba(124,111,247,0.12); }
+.conn-pill {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border-radius: 30px;
+  font-size: 11px; font-weight: 600;
+  background: var(--glass); backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+}
+.conn-dot { width: 7px; height: 7px; border-radius: 50%; }
+.conn-dot.ok { background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,0.5); }
+.conn-dot.err { background: var(--red); }
+.conn-dot.loading { background: var(--text3); }
 
-/* STATS */
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
-.stat-card{background:var(--surface);border-radius:var(--radius);padding:16px 18px;border:1px solid var(--border);box-shadow:var(--shadow)}
-.stat-label{font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px}
-.stat-val{font-size:26px;font-weight:800;margin:4px 0 2px;letter-spacing:-1px}
-.stat-meta{font-size:11px;color:var(--text-secondary)}
-.stat-card.blue .stat-val{color:var(--primary)}
-.stat-card.orange .stat-val{color:var(--accent)}
-.stat-card.green .stat-val{color:var(--success)}
-.stat-card.red .stat-val{color:var(--danger)}
+/* GLASS CARD */
+.gcard {
+  background: var(--glass);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius);
+  box-shadow: var(--glass-shadow);
+  overflow: hidden;
+}
+.gcard-header {
+  padding: 16px 20px; display: flex; align-items: center; gap: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.6);
+}
+.gcard-title { font-weight: 700; font-size: 14px; color: var(--text); }
+.gcard-body { padding: 20px; }
+.gcard-footer {
+  padding: 14px 20px; display: flex; gap: 8px; justify-content: flex-end;
+  border-top: 1px solid rgba(255,255,255,0.6);
+  background: rgba(255,255,255,0.3);
+}
+
+/* STAT CARDS */
+.stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
+.stat-card {
+  background: var(--glass); backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius); padding: 20px;
+  box-shadow: var(--glass-shadow);
+  transition: transform 0.2s, box-shadow 0.2s;
+  position: relative; overflow: hidden;
+}
+.stat-card:hover { transform: translateY(-2px); box-shadow: var(--glass-shadow-lg); }
+.stat-card::after {
+  content: ''; position: absolute; top: -30px; right: -30px;
+  width: 100px; height: 100px; border-radius: 50%;
+  opacity: 0.1;
+}
+.stat-card.purple::after { background: var(--purple); }
+.stat-card.blue::after { background: var(--blue); }
+.stat-card.green::after { background: var(--green); }
+.stat-card.orange::after { background: var(--accent); }
+.stat-icon {
+  width: 40px; height: 40px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; margin-bottom: 12px;
+}
+.stat-card.purple .stat-icon { background: rgba(124,111,247,0.15); }
+.stat-card.blue .stat-icon { background: rgba(91,141,238,0.15); }
+.stat-card.green .stat-icon { background: rgba(34,197,94,0.15); }
+.stat-card.orange .stat-icon { background: rgba(249,115,22,0.15); }
+.stat-label { font-size: 12px; color: var(--text2); font-weight: 500; margin-bottom: 4px; }
+.stat-val { font-size: 28px; font-weight: 800; letter-spacing: -1px; }
+.stat-card.purple .stat-val { color: var(--purple); }
+.stat-card.blue .stat-val { color: var(--blue); }
+.stat-card.green .stat-val { color: var(--green); }
+.stat-card.orange .stat-val { color: var(--accent); }
+.stat-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 10px; font-weight: 700; padding: 2px 7px;
+  border-radius: 20px; margin-top: 4px;
+}
+.stat-badge.up { background: rgba(34,197,94,0.12); color: #16a34a; }
+.stat-badge.down { background: rgba(239,68,68,0.12); color: #dc2626; }
+
+/* SECTION LABEL */
+.sec-label {
+  font-size: 13px; font-weight: 700; color: var(--text);
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.sec-label .toggle-icon { font-size: 16px; color: var(--text3); cursor: pointer; }
 
 /* BUTTONS */
-.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:inherit;white-space:nowrap}
-.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-light)}
-.btn-accent{background:var(--accent);color:#fff}.btn-accent:hover{background:#ea6c05}
-.btn-outline{background:transparent;border:1.5px solid var(--border);color:var(--text)}.btn-outline:hover{border-color:var(--primary);color:var(--primary)}
-.btn-success{background:var(--success);color:#fff}
-.btn-danger{background:var(--danger);color:#fff}
-.btn-warn{background:var(--warn);color:#fff}
-.btn-sm{padding:5px 10px;font-size:12px}
-.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 9px 18px; border-radius: 30px;
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  border: none; transition: all 0.2s; font-family: inherit;
+  white-space: nowrap;
+}
+.btn-primary {
+  background: linear-gradient(135deg, var(--purple), var(--blue));
+  color: #fff; box-shadow: 0 4px 16px rgba(124,111,247,0.35);
+}
+.btn-primary:hover { box-shadow: 0 6px 24px rgba(124,111,247,0.5); transform: translateY(-1px); }
+.btn-ghost {
+  background: var(--glass); backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  color: var(--text2); box-shadow: var(--glass-shadow);
+}
+.btn-ghost:hover { color: var(--purple); border-color: rgba(124,111,247,0.3); }
+.btn-success { background: linear-gradient(135deg,#16a34a,#22c55e); color:#fff; box-shadow:0 4px 16px rgba(34,197,94,.3); }
+.btn-danger { background: linear-gradient(135deg,#dc2626,#ef4444); color:#fff; box-shadow:0 4px 16px rgba(239,68,68,.3); }
+.btn-warn { background: linear-gradient(135deg,#d97706,#f59e0b); color:#fff; }
+.btn-sm { padding: 6px 14px; font-size: 12px; border-radius: 20px; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
+.btn-accent { background: linear-gradient(135deg,#f97316,#fb923c); color:#fff; box-shadow:0 4px 16px rgba(249,115,22,.3); }
 
 /* BADGE */
-.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:100px;font-size:11px;font-weight:600}
-.badge-blue{background:#dbeafe;color:#1d4ed8}
-.badge-orange{background:var(--accent-soft);color:#c2410c}
-.badge-green{background:var(--success-soft);color:#15803d}
-.badge-red{background:var(--danger-soft);color:#b91c1c}
-.badge-gray{background:#f1f5f9;color:#475569}
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
+}
+.badge-purple { background: rgba(124,111,247,0.12); color: var(--purple-dark); }
+.badge-blue { background: rgba(91,141,238,0.12); color: #1d4ed8; }
+.badge-orange { background: rgba(249,115,22,0.12); color: #c2410c; }
+.badge-green { background: rgba(34,197,94,0.12); color: #15803d; }
+.badge-red { background: rgba(239,68,68,0.12); color: #b91c1c; }
+.badge-gray { background: rgba(107,111,168,0.1); color: var(--text2); }
+.status-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.dot-green { background: var(--green); }
+.dot-orange { background: var(--accent); }
+.dot-red { background: var(--red); }
 
 /* FORM */
-.form-grid{display:grid;gap:14px}
-.g2{grid-template-columns:1fr 1fr}
-.g3{grid-template-columns:1fr 1fr 1fr}
-.form-group{display:flex;flex-direction:column;gap:5px}
-.form-label{font-size:12px;font-weight:600;color:var(--text-secondary)}
-.req{color:var(--danger)}
-.form-control{padding:8px 11px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:inherit;color:var(--text);background:var(--surface);outline:none;transition:border-color .15s}
-.form-control:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(15,76,117,.1)}
-select.form-control{cursor:pointer}
-textarea.form-control{resize:vertical;min-height:70px}
+.form-grid { display: grid; gap: 14px; }
+.g2 { grid-template-columns: 1fr 1fr; }
+.g3 { grid-template-columns: 1fr 1fr 1fr; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-label { font-size: 12px; font-weight: 600; color: var(--text2); }
+.req { color: var(--red); }
+.form-control {
+  padding: 10px 14px;
+  border: 1.5px solid rgba(255,255,255,0.8);
+  border-radius: var(--radius-sm);
+  font-size: 13px; font-family: inherit; color: var(--text);
+  background: var(--glass); backdrop-filter: blur(8px);
+  outline: none; transition: all 0.2s;
+}
+.form-control:focus {
+  border-color: rgba(124,111,247,0.5);
+  box-shadow: 0 0 0 3px rgba(124,111,247,0.1);
+  background: rgba(255,255,255,0.85);
+}
+select.form-control { cursor: pointer; }
+textarea.form-control { resize: vertical; min-height: 70px; }
 
 /* TABLE */
-table{width:100%;border-collapse:collapse;font-size:13px}
-thead{background:var(--surface2)}
-th{padding:9px 12px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);border-bottom:1px solid var(--border);white-space:nowrap}
-td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
-tr:last-child td{border-bottom:none}
-tbody tr:hover{background:var(--surface2)}
-.td-mono{font-family:'DM Mono',monospace;font-size:12px}
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead { background: rgba(255,255,255,0.5); }
+th {
+  padding: 10px 14px; text-align: left; font-weight: 700; font-size: 11px;
+  text-transform: uppercase; letter-spacing: 0.5px; color: var(--text2);
+  border-bottom: 1px solid rgba(255,255,255,0.6);
+}
+td { padding: 11px 14px; border-bottom: 1px solid rgba(255,255,255,0.4); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: rgba(255,255,255,0.5); }
+.td-mono { font-family: 'DM Mono', monospace; font-size: 12px; }
+.text-right { text-align: right; }
+.text-center { text-align: center; }
 
-/* SECTION */
-.sec-title{background:var(--primary);color:#fff;padding:8px 14px;font-weight:700;font-size:12px;border-radius:6px;margin:14px 0 4px}
-.sec-subtitle{background:#e8f1fb;color:var(--primary);padding:6px 14px;font-weight:600;font-size:12px;border-radius:5px;margin:6px 0 3px}
+/* SECTION HEADERS */
+.comp-section-hd {
+  background: linear-gradient(135deg, var(--purple), var(--blue));
+  color: #fff; padding: 10px 16px; font-weight: 700; font-size: 12px;
+  border-radius: 10px; margin: 16px 0 6px;
+  display: flex; align-items: center; gap: 8px;
+  box-shadow: 0 4px 12px rgba(124,111,247,0.25);
+}
+.comp-sub-hd {
+  background: rgba(124,111,247,0.08);
+  border-left: 3px solid var(--purple-light);
+  color: var(--purple-dark); padding: 7px 14px;
+  font-weight: 600; font-size: 12px; border-radius: 0 8px 8px 0;
+  margin: 8px 0 4px;
+}
 
 /* COMP TABLE */
-.comp-table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:8px}
-.comp-table th{padding:7px 10px;background:#f1f5f9;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);border:1px solid var(--border)}
-.comp-table td{padding:5px 7px;border:1px solid var(--border);vertical-align:middle}
-.comp-table tbody tr:hover{background:#f8fafc}
-.comp-table input[type=number],.comp-table textarea,.comp-table select{width:100%;padding:5px 7px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:inherit;background:#fff;outline:none}
-.comp-table input:focus,.comp-table select:focus,.comp-table textarea:focus{border-color:var(--primary)}
-.comp-table .tot-cell{font-family:'DM Mono',monospace;font-weight:600;color:var(--primary);text-align:right;font-size:12px}
-.comp-table .desc-cell{font-weight:600;color:var(--text);font-size:12px}
-.file-label{display:inline-flex;align-items:center;gap:4px;padding:4px 8px;border-radius:5px;border:1px solid var(--border);cursor:pointer;font-size:11px;font-weight:600;transition:all .15s;background:#fff}
-.file-label:hover{border-color:var(--primary);color:var(--primary)}
+.comp-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 8px; }
+.comp-table th {
+  padding: 7px 10px; background: rgba(124,111,247,0.06);
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--text2);
+  border: 1px solid rgba(255,255,255,0.6);
+}
+.comp-table td { padding: 5px 7px; border: 1px solid rgba(255,255,255,0.5); vertical-align: middle; }
+.comp-table tbody tr:hover { background: rgba(255,255,255,0.6); }
+.comp-table input[type=number], .comp-table textarea, .comp-table select {
+  width: 100%; padding: 5px 8px;
+  border: 1px solid rgba(124,111,247,0.2);
+  border-radius: 8px; font-size: 12px; font-family: inherit;
+  background: rgba(255,255,255,0.8); outline: none; color: var(--text);
+}
+.comp-table input:focus, .comp-table select:focus, .comp-table textarea:focus {
+  border-color: var(--purple); box-shadow: 0 0 0 2px rgba(124,111,247,0.12);
+}
+.comp-table .tot-cell {
+  font-family: 'DM Mono', monospace; font-weight: 700;
+  color: var(--purple); text-align: right; font-size: 12px;
+}
+.comp-table .desc-cell { font-weight: 600; color: var(--text); font-size: 12px; }
+.file-label {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 4px 10px; border-radius: 20px;
+  border: 1px solid rgba(124,111,247,0.25);
+  cursor: pointer; font-size: 11px; font-weight: 600;
+  background: rgba(124,111,247,0.06); color: var(--purple);
+  transition: all 0.2s;
+}
+.file-label:hover { background: rgba(124,111,247,0.15); }
 
-/* SUMMARY */
-.summary-box{background:linear-gradient(135deg,#e8f1fb,#f0f4f8);border:1px solid #c5d8f0;border-radius:10px;padding:16px;margin-top:8px}
-.sum-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px;border-bottom:1px dashed #c5d8f0}
-.sum-row:last-child{border-bottom:none;font-weight:800;font-size:15px;margin-top:6px;padding-top:8px;border-top:2px solid var(--primary)}
-.sum-lbl{color:var(--text-secondary)}
-.sum-val{font-family:'DM Mono',monospace;font-weight:600}
+/* SUMMARY BOX */
+.summary-box {
+  background: linear-gradient(135deg, rgba(124,111,247,0.08), rgba(91,141,238,0.08));
+  border: 1px solid rgba(124,111,247,0.2);
+  border-radius: var(--radius-sm); padding: 18px;
+}
+.sum-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 6px 0; font-size: 13px;
+  border-bottom: 1px dashed rgba(124,111,247,0.15);
+}
+.sum-row:last-child {
+  border-bottom: none; font-weight: 800; font-size: 15px;
+  margin-top: 8px; padding-top: 10px;
+  border-top: 2px solid rgba(124,111,247,0.3);
+}
+.sum-lbl { color: var(--text2); }
+.sum-val { font-family: 'DM Mono', monospace; font-weight: 700; }
 
 /* MODAL */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
-.modal-overlay.open{display:flex}
-.modal-box{background:var(--surface);border-radius:12px;box-shadow:var(--shadow-lg);width:100%;max-height:92vh;overflow-y:auto;display:flex;flex-direction:column}
-.modal-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:10}
-.modal-title{font-weight:800;font-size:16px}
-.modal-body{padding:20px;flex:1}
-.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:var(--surface)}
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(30,27,75,0.45);
+  backdrop-filter: blur(8px);
+  z-index: 200; display: none;
+  align-items: center; justify-content: center; padding: 16px;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: rgba(255,255,255,0.88); backdrop-filter: blur(24px);
+  border: 1px solid var(--glass-border);
+  border-radius: 24px; box-shadow: var(--glass-shadow-lg);
+  width: 100%; max-height: 92vh; overflow-y: auto;
+  display: flex; flex-direction: column;
+}
+.modal-header {
+  padding: 18px 22px; border-bottom: 1px solid rgba(255,255,255,0.6);
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0;
+  background: rgba(255,255,255,0.88); backdrop-filter: blur(24px); z-index: 10;
+  border-radius: 24px 24px 0 0;
+}
+.modal-title { font-weight: 800; font-size: 16px; }
+.modal-body { padding: 20px; flex: 1; }
+.modal-footer {
+  padding: 14px 22px; border-top: 1px solid rgba(255,255,255,0.6);
+  display: flex; gap: 8px; justify-content: flex-end;
+  position: sticky; bottom: 0;
+  background: rgba(255,255,255,0.88); backdrop-filter: blur(24px);
+}
 
 /* VERIF TABLE */
-.verif-table{width:100%;border-collapse:collapse;font-size:12px}
-.verif-table th{padding:8px 10px;background:var(--primary);color:#fff;font-size:10px;font-weight:700;text-transform:uppercase;border:1px solid rgba(255,255,255,.15);white-space:nowrap}
-.verif-table td{padding:6px 9px;border:1px solid var(--border);vertical-align:middle}
-.verif-table tbody tr:hover{background:#f8fafc}
-.verif-table input[type=number]{width:100%;padding:5px 7px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:'DM Mono',monospace;outline:none}
-.verif-table textarea{width:100%;padding:5px 7px;border:1px solid var(--border);border-radius:5px;font-size:12px;font-family:inherit;outline:none;resize:vertical;min-height:30px}
-.verif-table input:focus,.verif-table textarea:focus{border-color:var(--primary)}
-.verif-group-row td{background:#e8f1fb;color:var(--primary);font-weight:700;font-size:11px;padding:5px 10px}
+.verif-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.verif-table th {
+  padding: 8px 10px;
+  background: linear-gradient(135deg,var(--purple),var(--blue));
+  color: #fff; font-size: 10px; font-weight: 700;
+  text-transform: uppercase; border: 1px solid rgba(255,255,255,0.2);
+}
+.verif-table td { padding: 7px 10px; border: 1px solid rgba(255,255,255,0.5); vertical-align: middle; }
+.verif-table tbody tr:hover { background: rgba(255,255,255,0.6); }
+.verif-table input[type=number], .verif-table textarea {
+  width: 100%; padding: 5px 7px;
+  border: 1px solid rgba(124,111,247,0.2); border-radius: 8px;
+  font-size: 12px; font-family: inherit; outline: none;
+  background: rgba(255,255,255,0.8);
+}
+.verif-table input:focus, .verif-table textarea:focus { border-color: var(--purple); }
+.verif-group-row td {
+  background: rgba(124,111,247,0.07);
+  color: var(--purple-dark); font-weight: 700; font-size: 11px; padding: 5px 10px;
+}
 
 /* ALERT */
-.alert{padding:11px 14px;border-radius:8px;font-size:13px;display:flex;align-items:flex-start;gap:8px;margin-bottom:14px}
-.alert-info{background:#dbeafe;color:#1e40af}
-.alert-warn{background:var(--warn-soft);color:#92400e}
-.alert-success{background:var(--success-soft);color:#15803d}
+.alert { padding: 12px 15px; border-radius: var(--radius-sm); font-size: 13px; display: flex; align-items: flex-start; gap: 8px; margin-bottom: 14px; }
+.alert-info { background: rgba(91,141,238,0.1); color: #1e40af; border: 1px solid rgba(91,141,238,0.2); }
+.alert-warn { background: rgba(249,115,22,0.08); color: #c2410c; border: 1px solid rgba(249,115,22,0.2); }
+.alert-success { background: rgba(34,197,94,0.08); color: #15803d; border: 1px solid rgba(34,197,94,0.2); }
 
 /* LOADING */
-.loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.85);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
-.spinner{width:36px;height:36px;border:3px solid var(--border);border-top-color:var(--primary);border-radius:50%;animation:spin .7s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
+.loading-overlay {
+  position: fixed; inset: 0;
+  background: rgba(238,240,248,0.85); backdrop-filter: blur(10px);
+  z-index: 300; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 14px;
+}
+.spinner {
+  width: 38px; height: 38px;
+  border: 3px solid rgba(124,111,247,0.2);
+  border-top-color: var(--purple);
+  border-radius: 50%; animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+.page > * { animation: fadeUp 0.3s ease both; }
 
-.status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;margin-right:3px}
-.dot-green{background:var(--success)}.dot-orange{background:var(--accent)}.dot-red{background:var(--danger)}
-.text-right{text-align:right}.text-center{text-align:center}
-.mt-8{margin-top:8px}.mt-12{margin-top:12px}.mt-16{margin-top:16px}
-.mb-8{margin-bottom:8px}.mb-12{margin-bottom:12px}
-.font-mono{font-family:'DM Mono',monospace}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-@media print{.app-header,.app-sidebar,.no-print{display:none!important}.app-main{margin:0;padding:0}}
+/* CHART BARS */
+.chart-wrap { display: flex; align-items: flex-end; gap: 8px; height: 150px; padding: 0 4px; }
+.chart-bar-col { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+.chart-bar { width: 100%; border-radius: 8px 8px 0 0; background: linear-gradient(180deg, var(--purple-light), var(--purple)); min-height: 4px; transition: height 0.4s; }
+.chart-bar-col:hover .chart-bar { background: linear-gradient(180deg,var(--blue-light),var(--blue)); }
+.chart-bar-label { font-size: 10px; color: var(--text3); font-weight: 600; }
+.chart-bar-val { font-size: 9px; color: var(--text2); font-family: 'DM Mono', monospace; }
+
+/* MISC */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.mt-8 { margin-top: 8px; }
+.mt-12 { margin-top: 12px; }
+.mt-16 { margin-top: 16px; }
+.mb-12 { margin-bottom: 12px; }
+.font-mono { font-family: 'DM Mono', monospace; }
+.page { display: none; }
+.page.active { display: block; }
+
+/* TOAST */
+.toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+.toast {
+  padding: 12px 18px; border-radius: 14px; font-size: 13px; font-weight: 600;
+  backdrop-filter: blur(12px); box-shadow: var(--glass-shadow-lg);
+  border: 1px solid rgba(255,255,255,0.8);
+  animation: fadeUp 0.3s ease;
+  max-width: 340px;
+}
+.toast.info { background: rgba(91,141,238,0.9); color: #fff; }
+.toast.success { background: rgba(34,197,94,0.9); color: #fff; }
+.toast.error { background: rgba(239,68,68,0.9); color: #fff; }
+.toast.warn { background: rgba(249,115,22,0.9); color: #fff; }
+
+@media print { .sidebar,.topbar,.no-print{display:none!important}.main{margin:0;padding:0} }
 </style>
 </head>
 <body>
@@ -173,263 +495,317 @@ tbody tr:hover{background:var(--surface2)}
 <!-- LOADING -->
 <div class="loading-overlay" id="app-loading">
   <div class="spinner"></div>
-  <div style="font-size:13px;color:var(--text-secondary);font-weight:600">Menghubungkan ke database...</div>
+  <div style="font-size:13px;color:var(--text2);font-weight:600">Menghubungkan ke Supabase...</div>
 </div>
 
-<!-- HEADER -->
-<header class="app-header">
-  <div class="logo-icon">🚌</div>
-  <div style="margin-left:4px">
-    <div class="logo-text">SIMVERI</div>
-    <div class="logo-sub">Sistem Verifikasi Subsidi TransJogja – PT AMI</div>
-  </div>
-  <div style="flex:1"></div>
-  <div id="conn-status" class="conn-badge loading">● Menghubungkan...</div>
-  <div class="header-meta" style="margin-left:12px">
-    <strong id="hdr-date">–</strong>
-    <span>PT Anindya Mitra Internasional</span>
-  </div>
-</header>
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container"></div>
 
 <!-- SIDEBAR -->
-<nav class="app-sidebar">
-  <div class="nav-section">
-    <div class="nav-label">Dashboard</div>
-    <div class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">📊</span>Dashboard</div>
-  </div>
-  <div class="nav-divider"></div>
-  <div class="nav-section">
-    <div class="nav-label">Input</div>
-    <div class="nav-item" onclick="showPage('input-pengajuan')"><span class="nav-icon">📝</span>Input Pengajuan</div>
-    <div class="nav-item" onclick="showPage('hasil-verifikasi')"><span class="nav-icon">✅</span>Hasil Verifikasi</div>
-    <div class="nav-item" onclick="showPage('daftar-pengajuan')"><span class="nav-icon">📋</span>Daftar Pengajuan</div>
-  </div>
-  <div class="nav-divider"></div>
-  <div class="nav-section">
-    <div class="nav-label">Laporan</div>
-    <div class="nav-item" onclick="showPage('laporan-bulanan')"><span class="nav-icon">📅</span>Laporan Bulanan</div>
-    <div class="nav-item" onclick="showPage('laporan-triwulan')"><span class="nav-icon">📆</span>Laporan Triwulan</div>
-    <div class="nav-item" onclick="showPage('laporan-semester')"><span class="nav-icon">🗓️</span>Laporan Semester</div>
-    <div class="nav-item" onclick="showPage('laporan-tahunan')"><span class="nav-icon">📁</span>Laporan Tahunan</div>
-  </div>
+<nav class="sidebar">
+  <div class="sidebar-logo">🚌</div>
+  <button class="nav-btn active" onclick="showPage('dashboard')" id="nav-dashboard">
+    <span>📊</span><div class="tooltip">Dashboard</div>
+  </button>
+  <button class="nav-btn" onclick="showPage('input-pengajuan')" id="nav-input-pengajuan">
+    <span>📝</span><div class="tooltip">Input Pengajuan</div>
+  </button>
+  <button class="nav-btn" onclick="showPage('hasil-verifikasi')" id="nav-hasil-verifikasi">
+    <span>✅</span><div class="tooltip">Hasil Verifikasi</div>
+  </button>
+  <button class="nav-btn" onclick="showPage('daftar-pengajuan')" id="nav-daftar-pengajuan">
+    <span>📋</span><div class="tooltip">Daftar Pengajuan</div>
+  </button>
+  <div class="sidebar-spacer"></div>
+  <button class="nav-btn" onclick="showPage('laporan-bulanan')" id="nav-laporan-bulanan">
+    <span>📅</span><div class="tooltip">Laporan Bulanan</div>
+  </button>
+  <button class="nav-btn" onclick="showPage('laporan-triwulan')" id="nav-laporan-triwulan">
+    <span>📆</span><div class="tooltip">Laporan Triwulan</div>
+  </button>
+  <button class="nav-btn" onclick="showPage('laporan-semester')" id="nav-laporan-semester">
+    <span>🗓️</span><div class="tooltip">Laporan Semester</div>
+  </button>
+  <button class="nav-btn" onclick="showPage('laporan-tahunan')" id="nav-laporan-tahunan">
+    <span>📁</span><div class="tooltip">Laporan Tahunan</div>
+  </button>
 </nav>
 
-<main class="app-main">
+<!-- MAIN -->
+<div class="main">
 
-<!-- DASHBOARD -->
-<div id="page-dashboard" class="page">
-  <div style="margin-bottom:20px"><div class="page-title">Dashboard Verifikasi Subsidi</div><div class="page-sub">Rekapitulasi status pengajuan & verifikasi subsidi TransJogja</div></div>
-  <div class="stats-row">
-    <div class="stat-card blue"><div class="stat-label">Total Pengajuan</div><div class="stat-val" id="stat-total">–</div><div class="stat-meta">Semua periode</div></div>
-    <div class="stat-card orange"><div class="stat-label">Menunggu Verifikasi</div><div class="stat-val" id="stat-pending">–</div><div class="stat-meta">Perlu ditindaklanjuti</div></div>
-    <div class="stat-card green"><div class="stat-label">Terverifikasi</div><div class="stat-val" id="stat-verified">–</div><div class="stat-meta">Disetujui</div></div>
-    <div class="stat-card red"><div class="stat-label">Perlu Revisi</div><div class="stat-val" id="stat-revisi">–</div><div class="stat-meta">Ada catatan</div></div>
-  </div>
-  <div class="two-col">
-    <div class="card">
-      <div class="card-header"><span>📊</span><div class="card-title">Nilai Pengajuan per Bulan</div></div>
-      <div class="card-body" id="dash-chart" style="min-height:180px;display:flex;align-items:flex-end"></div>
+  <!-- TOP BAR -->
+  <div class="topbar no-print">
+    <div class="topbar-greeting">
+      <h1 id="topbar-title">Selamat Datang 👋</h1>
+      <p id="topbar-sub">Sistem Verifikasi Subsidi TransJogja – PT AMI</p>
     </div>
-    <div class="card">
-      <div class="card-header"><span>🕒</span><div class="card-title">Pengajuan Terakhir</div></div>
-      <div style="overflow-x:auto"><table><thead><tr><th>No Pengajuan</th><th>Periode</th><th>Status</th><th>Nilai</th></tr></thead>
-      <tbody id="dash-recent-body"><tr><td colspan="4" class="text-center" style="padding:24px;color:var(--text-muted)">Memuat...</td></tr></tbody></table></div>
+    <div class="topbar-search">
+      <span style="font-size:14px;color:var(--text3)">🔍</span>
+      <input type="text" placeholder="Cari pengajuan...">
     </div>
-  </div>
-</div>
-
-<!-- INPUT PENGAJUAN -->
-<div id="page-input-pengajuan" class="page" style="display:none">
-  <div style="margin-bottom:20px"><div class="page-title">Input Pengajuan Verifikasi</div><div class="page-sub">Isi komponen biaya & pendapatan sesuai realisasi periode yang diajukan</div></div>
-  <div class="card">
-    <div class="card-header"><span>🗂️</span><div class="card-title">Informasi Umum Pengajuan</div></div>
-    <div class="card-body">
-      <div class="alert alert-info">ℹ️ Data tersimpan langsung ke <strong>Supabase Cloud</strong> — dapat diakses dari perangkat manapun secara real-time.</div>
-      <div class="form-grid g3">
-        <div class="form-group"><label class="form-label">No. Pengajuan</label><input class="form-control" id="f-no" readonly style="background:var(--surface2)" placeholder="Auto-generate saat simpan"></div>
-        <div class="form-group"><label class="form-label">Jenis Bus <span class="req">*</span></label>
-          <select class="form-control" id="f-jenis"><option value="">— Pilih Jenis Bus —</option><option>Bus Diesel</option><option>Bus Listrik</option></select>
-        </div>
-        <div class="form-group"><label class="form-label">Periode Bulan <span class="req">*</span></label>
-          <select class="form-control" id="f-bulan"><option value="">— Pilih Bulan —</option>
-            <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option>
-            <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
-            <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
-            <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
-          </select>
-        </div>
-        <div class="form-group"><label class="form-label">Tahun <span class="req">*</span></label>
-          <select class="form-control" id="f-tahun"><option value="2024">2024</option><option value="2025" selected>2025</option><option value="2026">2026</option><option value="2027">2027</option></select>
-        </div>
-        <div class="form-group"><label class="form-label">Tanggal Pengajuan</label><input type="date" class="form-control" id="f-tgl"></div>
-        <div class="form-group"><label class="form-label">Penanggung Jawab</label><input type="text" class="form-control" id="f-pj" placeholder="Nama PJ pengajuan"></div>
+    <div class="topbar-actions">
+      <div class="conn-pill">
+        <div class="conn-dot loading" id="conn-dot"></div>
+        <span id="conn-text" style="color:var(--text2)">Menghubungkan...</span>
       </div>
-      <div class="form-group mt-12"><label class="form-label">Catatan Umum Pengajuan</label><textarea class="form-control" id="f-catatan" rows="2" placeholder="Keterangan umum jika ada..."></textarea></div>
+      <div class="icon-btn" title="Refresh data" onclick="reloadData()">🔄</div>
+      <div class="icon-btn" title="Cetak" onclick="window.print()">🖨️</div>
     </div>
   </div>
 
-  <div class="card">
-    <div class="card-header" style="background:var(--primary);border-radius:var(--radius) var(--radius) 0 0"><span style="color:#fff">💰</span><div class="card-title" style="color:#fff">A. Biaya Langsung</div></div>
-    <div class="card-body">
-      <div class="sec-subtitle">① Biaya Investasi & Administrasi Kendaraan</div><div id="comp-inv"></div>
-      <div class="sec-subtitle">② Biaya Operasional & Pemeliharaan</div><div id="comp-ops"></div>
-      <div class="sec-subtitle">③ Sistem Monitoring Keselamatan & Keamanan</div><div id="comp-monitor"></div>
-      <div class="sec-subtitle">④ Biaya Awak Kendaraan (Pramudi)</div><div id="comp-pramudi"></div>
-      <div class="sec-subtitle">⑤ Biaya Peningkatan Fasilitas Armada</div><div id="comp-fasilitas"></div>
-      <div class="sec-subtitle">⑥ Biaya Asuransi Penumpang</div><div id="comp-asuransi"></div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-header" style="background:#1b6ca8;border-radius:var(--radius) var(--radius) 0 0"><span style="color:#fff">🏢</span><div class="card-title" style="color:#fff">B. Biaya Tidak Langsung</div></div>
-    <div class="card-body">
-      <div class="sec-subtitle">① Biaya Pegawai Kantor, Pool & Bengkel</div><div id="comp-pegawai"></div>
-      <div class="sec-subtitle">② Biaya Pengelolaan</div><div id="comp-kelola"></div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-header" style="background:#2563eb;border-radius:var(--radius) var(--radius) 0 0"><span style="color:#fff">🛠️</span><div class="card-title" style="color:#fff">C. Biaya Pendukung</div></div>
-    <div class="card-body"><div id="comp-pendukung"></div></div>
-  </div>
-  <div class="card">
-    <div class="card-header" style="background:#15803d;border-radius:var(--radius) var(--radius) 0 0"><span style="color:#fff">💵</span><div class="card-title" style="color:#fff">D. Pendapatan</div></div>
-    <div class="card-body">
-      <div class="sec-subtitle">① Pendapatan Tiket</div><div id="comp-tiket"></div>
-      <div class="sec-subtitle">② Pendapatan Lain-lain</div><div id="comp-pendapatan-lain"></div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-header"><span>📊</span><div class="card-title">Ringkasan Perhitungan Subsidi</div></div>
-    <div class="card-body">
-      <div class="summary-box">
-        <div class="sum-row"><span class="sum-lbl">Total Biaya Pokok (A + B)</span><span class="sum-val" id="sum-biaya-pokok">Rp 0</span></div>
-        <div class="sum-row"><span class="sum-lbl">Keuntungan 7% × Biaya Pokok</span><span class="sum-val" id="sum-keuntungan">Rp 0</span></div>
-        <div class="sum-row"><span class="sum-lbl">Total Biaya Pendukung (C)</span><span class="sum-val" id="sum-pendukung">Rp 0</span></div>
-        <div class="sum-row"><span class="sum-lbl">Total Pendapatan (D)</span><span class="sum-val" id="sum-pendapatan">Rp 0</span></div>
-        <div class="sum-row"><span class="sum-lbl" style="color:var(--primary);font-weight:700">SUBSIDI = (A+B) + Untung 7% + C − D</span><span class="sum-val" style="color:var(--primary);font-size:16px" id="sum-subsidi">Rp 0</span></div>
+  <!-- ===== DASHBOARD ===== -->
+  <div id="page-dashboard" class="page active">
+    <div class="stats-grid">
+      <div class="stat-card purple">
+        <div class="stat-icon">📋</div>
+        <div class="stat-label">Total Pengajuan</div>
+        <div class="stat-val" id="stat-total">–</div>
+        <div class="stat-badge up" id="stat-total-sub">Semua periode</div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-icon">⏳</div>
+        <div class="stat-label">Menunggu Verifikasi</div>
+        <div class="stat-val" id="stat-pending">–</div>
+        <div class="stat-badge down" id="stat-pending-sub">Perlu ditindaklanjuti</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon">✅</div>
+        <div class="stat-label">Terverifikasi</div>
+        <div class="stat-val" id="stat-verified">–</div>
+        <div class="stat-badge up">Disetujui</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-icon">⚠️</div>
+        <div class="stat-label">Perlu Revisi</div>
+        <div class="stat-val" id="stat-revisi">–</div>
+        <div class="stat-badge down">Ada catatan</div>
       </div>
     </div>
-    <div class="card-footer">
-      <button class="btn btn-outline" onclick="resetForm()">🔄 Reset Form</button>
-      <button class="btn btn-primary" id="btn-simpan" onclick="savePengajuan()">💾 Simpan ke Supabase</button>
-    </div>
-  </div>
-</div>
 
-<!-- HASIL VERIFIKASI -->
-<div id="page-hasil-verifikasi" class="page" style="display:none">
-  <div style="margin-bottom:20px"><div class="page-title">Hasil Verifikasi</div><div class="page-sub">Verifikasi komponen per pengajuan — selisih & keterangan dicatat per baris</div></div>
-  <div class="card">
-    <div class="card-header"><span>🔍</span><div class="card-title">Filter Pengajuan</div></div>
-    <div class="card-body">
-      <div class="form-grid g3">
-        <div class="form-group"><label class="form-label">Periode Bulan</label>
-          <select class="form-control" id="vf-bulan" onchange="renderVfList()"><option value="">— Semua —</option>
-            <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option>
-            <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
-            <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
-            <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
-          </select>
+    <div class="two-col">
+      <div class="gcard">
+        <div class="gcard-header">
+          <span>📊</span><div class="gcard-title">Nilai Pengajuan per Bulan</div>
+          <div style="margin-left:auto;font-size:11px;color:var(--text3)">juta Rp</div>
         </div>
-        <div class="form-group"><label class="form-label">Tahun</label>
-          <select class="form-control" id="vf-tahun" onchange="renderVfList()"><option value="2025" selected>2025</option><option value="2026">2026</option><option value="2027">2027</option></select>
+        <div class="gcard-body">
+          <div class="chart-wrap" id="dash-chart">
+            <div style="text-align:center;width:100%;color:var(--text3);font-size:13px;padding:20px">Belum ada data</div>
+          </div>
         </div>
-        <div class="form-group"><label class="form-label">Status</label>
-          <select class="form-control" id="vf-status" onchange="renderVfList()"><option value="">— Semua —</option><option value="Menunggu">Menunggu</option><option value="Terverifikasi">Terverifikasi</option><option value="Revisi">Revisi</option></select>
+      </div>
+      <div class="gcard">
+        <div class="gcard-header"><span>🕒</span><div class="gcard-title">Pengajuan Terakhir</div></div>
+        <div style="overflow-x:auto">
+          <table>
+            <thead><tr><th>No Pengajuan</th><th>Periode</th><th>Status</th><th>Nilai</th></tr></thead>
+            <tbody id="dash-recent-body">
+              <tr><td colspan="4" class="text-center" style="padding:24px;color:var(--text3)">Memuat...</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
   </div>
-  <div class="card">
-    <div class="card-header"><span>📋</span><div class="card-title">Daftar Pengajuan</div><div style="margin-left:auto"><button class="btn btn-outline btn-sm" onclick="renderVfList()">🔄 Refresh</button></div></div>
-    <div style="overflow-x:auto"><table><thead><tr><th>No Pengajuan</th><th>Jenis Bus</th><th>Periode</th><th>Nilai Diajukan</th><th>Nilai Disetujui</th><th>Selisih Total</th><th>Komp. Selisih</th><th>Status</th><th>Aksi</th></tr></thead>
-    <tbody id="vf-list-body"><tr><td colspan="9" class="text-center" style="padding:24px;color:var(--text-muted)">Memuat data...</td></tr></tbody></table></div>
-  </div>
-</div>
 
-<!-- DAFTAR PENGAJUAN -->
-<div id="page-daftar-pengajuan" class="page" style="display:none">
-  <div style="margin-bottom:20px;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px">
-    <div><div class="page-title">Daftar Pengajuan</div><div class="page-sub">Semua pengajuan verifikasi subsidi</div></div>
-    <div style="display:flex;gap:8px">
-      <button class="btn btn-outline" onclick="renderDaftar()">🔄 Refresh</button>
+  <!-- ===== INPUT PENGAJUAN ===== -->
+  <div id="page-input-pengajuan" class="page">
+    <div class="alert alert-info mb-12">ℹ️ Data tersimpan langsung ke <strong>Supabase Cloud</strong> — dapat diakses dari perangkat manapun secara real-time.</div>
+
+    <div class="gcard mb-12">
+      <div class="gcard-header" style="background:linear-gradient(135deg,rgba(124,111,247,0.08),rgba(91,141,238,0.08))">
+        <span>🗂️</span><div class="gcard-title">Informasi Umum Pengajuan</div>
+      </div>
+      <div class="gcard-body">
+        <div class="form-grid g3">
+          <div class="form-group"><label class="form-label">No. Pengajuan</label><input class="form-control" id="f-no" readonly style="opacity:.7" placeholder="Auto-generate saat simpan"></div>
+          <div class="form-group"><label class="form-label">Jenis Bus <span class="req">*</span></label>
+            <select class="form-control" id="f-jenis"><option value="">— Pilih Jenis Bus —</option><option>Bus Diesel</option><option>Bus Listrik</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">Periode Bulan <span class="req">*</span></label>
+            <select class="form-control" id="f-bulan"><option value="">— Pilih Bulan —</option>
+              <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option>
+              <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
+              <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
+              <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Tahun</label>
+            <select class="form-control" id="f-tahun"><option value="2024">2024</option><option value="2025" selected>2025</option><option value="2026">2026</option><option value="2027">2027</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">Tanggal Pengajuan</label><input type="date" class="form-control" id="f-tgl"></div>
+          <div class="form-group"><label class="form-label">Penanggung Jawab</label><input type="text" class="form-control" id="f-pj" placeholder="Nama PJ pengajuan"></div>
+        </div>
+        <div class="form-group mt-12"><label class="form-label">Catatan Umum</label><textarea class="form-control" id="f-catatan" rows="2" placeholder="Keterangan umum jika ada..."></textarea></div>
+      </div>
+    </div>
+
+    <!-- A. BIAYA LANGSUNG -->
+    <div class="gcard mb-12">
+      <div class="gcard-header" style="background:linear-gradient(135deg,var(--purple),var(--blue))">
+        <span style="color:#fff">💰</span><div class="gcard-title" style="color:#fff">A. Biaya Langsung</div>
+      </div>
+      <div class="gcard-body">
+        <div class="comp-sub-hd">① Biaya Investasi & Administrasi Kendaraan</div><div id="comp-inv"></div>
+        <div class="comp-sub-hd">② Biaya Operasional & Pemeliharaan</div><div id="comp-ops"></div>
+        <div class="comp-sub-hd">③ Sistem Monitoring Keselamatan & Keamanan</div><div id="comp-monitor"></div>
+        <div class="comp-sub-hd">④ Biaya Awak Kendaraan (Pramudi)</div><div id="comp-pramudi"></div>
+        <div class="comp-sub-hd">⑤ Biaya Peningkatan Fasilitas Armada</div><div id="comp-fasilitas"></div>
+        <div class="comp-sub-hd">⑥ Biaya Asuransi Penumpang</div><div id="comp-asuransi"></div>
+      </div>
+    </div>
+
+    <!-- B. BIAYA TIDAK LANGSUNG -->
+    <div class="gcard mb-12">
+      <div class="gcard-header" style="background:linear-gradient(135deg,#5a4fcf,#7c6ff7)">
+        <span style="color:#fff">🏢</span><div class="gcard-title" style="color:#fff">B. Biaya Tidak Langsung</div>
+      </div>
+      <div class="gcard-body">
+        <div class="comp-sub-hd">① Biaya Pegawai Kantor, Pool & Bengkel</div><div id="comp-pegawai"></div>
+        <div class="comp-sub-hd">② Biaya Pengelolaan</div><div id="comp-kelola"></div>
+      </div>
+    </div>
+
+    <!-- C. PENDUKUNG -->
+    <div class="gcard mb-12">
+      <div class="gcard-header" style="background:linear-gradient(135deg,#2563eb,#5b8dee)">
+        <span style="color:#fff">🛠️</span><div class="gcard-title" style="color:#fff">C. Biaya Pendukung</div>
+      </div>
+      <div class="gcard-body"><div id="comp-pendukung"></div></div>
+    </div>
+
+    <!-- D. PENDAPATAN -->
+    <div class="gcard mb-12">
+      <div class="gcard-header" style="background:linear-gradient(135deg,#15803d,#22c55e)">
+        <span style="color:#fff">💵</span><div class="gcard-title" style="color:#fff">D. Pendapatan</div>
+      </div>
+      <div class="gcard-body">
+        <div class="comp-sub-hd">① Pendapatan Tiket</div><div id="comp-tiket"></div>
+        <div class="comp-sub-hd">② Pendapatan Lain-lain</div><div id="comp-pendapatan-lain"></div>
+      </div>
+    </div>
+
+    <!-- RINGKASAN -->
+    <div class="gcard">
+      <div class="gcard-header"><span>📊</span><div class="gcard-title">Ringkasan Perhitungan Subsidi</div></div>
+      <div class="gcard-body">
+        <div class="summary-box">
+          <div class="sum-row"><span class="sum-lbl">Total Biaya Pokok (A + B)</span><span class="sum-val" id="sum-biaya-pokok">Rp 0</span></div>
+          <div class="sum-row"><span class="sum-lbl">Keuntungan 7% × Biaya Pokok</span><span class="sum-val" id="sum-keuntungan">Rp 0</span></div>
+          <div class="sum-row"><span class="sum-lbl">Total Biaya Pendukung (C)</span><span class="sum-val" id="sum-pendukung">Rp 0</span></div>
+          <div class="sum-row"><span class="sum-lbl">Total Pendapatan (D)</span><span class="sum-val" id="sum-pendapatan">Rp 0</span></div>
+          <div class="sum-row"><span class="sum-lbl" style="color:var(--purple);font-weight:700">SUBSIDI = (A+B) + Untung 7% + C − D</span><span class="sum-val" style="color:var(--purple);font-size:17px" id="sum-subsidi">Rp 0</span></div>
+        </div>
+      </div>
+      <div class="gcard-footer">
+        <button class="btn btn-ghost" onclick="resetForm()">🔄 Reset Form</button>
+        <button class="btn btn-primary" id="btn-simpan" onclick="savePengajuan()">💾 Simpan ke Supabase</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== HASIL VERIFIKASI ===== -->
+  <div id="page-hasil-verifikasi" class="page">
+    <div class="gcard mb-12">
+      <div class="gcard-header"><span>🔍</span><div class="gcard-title">Filter Pengajuan</div></div>
+      <div class="gcard-body">
+        <div class="form-grid g3">
+          <div class="form-group"><label class="form-label">Periode Bulan</label>
+            <select class="form-control" id="vf-bulan" onchange="renderVfList()"><option value="">— Semua —</option>
+              <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option>
+              <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
+              <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
+              <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+            </select>
+          </div>
+          <div class="form-group"><label class="form-label">Tahun</label>
+            <select class="form-control" id="vf-tahun" onchange="renderVfList()"><option value="2025" selected>2025</option><option value="2026">2026</option></select>
+          </div>
+          <div class="form-group"><label class="form-label">Status</label>
+            <select class="form-control" id="vf-status" onchange="renderVfList()"><option value="">— Semua —</option><option value="Menunggu">Menunggu</option><option value="Terverifikasi">Terverifikasi</option><option value="Revisi">Revisi</option></select>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="gcard">
+      <div class="gcard-header"><span>📋</span><div class="gcard-title">Daftar Pengajuan</div><div style="margin-left:auto"><button class="btn btn-ghost btn-sm" onclick="renderVfList()">🔄 Refresh</button></div></div>
+      <div style="overflow-x:auto">
+        <table><thead><tr><th>No Pengajuan</th><th>Jenis Bus</th><th>Periode</th><th>Nilai Diajukan</th><th>Nilai Disetujui</th><th>Selisih</th><th>Komp.</th><th>Status</th><th>Aksi</th></tr></thead>
+        <tbody id="vf-list-body"><tr><td colspan="9" class="text-center" style="padding:24px;color:var(--text3)">Memuat data...</td></tr></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== DAFTAR PENGAJUAN ===== -->
+  <div id="page-daftar-pengajuan" class="page">
+    <div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:16px" class="no-print">
+      <button class="btn btn-ghost" onclick="renderDaftar()">🔄 Refresh</button>
       <button class="btn btn-accent" onclick="showPage('input-pengajuan')">+ Pengajuan Baru</button>
     </div>
-  </div>
-  <div class="card">
-    <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:8px;flex-wrap:wrap">
-      <select class="form-control" id="daf-bulan" style="width:auto" onchange="renderDaftar()"><option value="">Semua Bulan</option>
-        <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option>
-        <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
-        <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
-        <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
-      </select>
-      <select class="form-control" id="daf-tahun" style="width:auto" onchange="renderDaftar()"><option value="">Semua Tahun</option><option value="2025">2025</option><option value="2026">2026</option></select>
-      <select class="form-control" id="daf-status" style="width:auto" onchange="renderDaftar()"><option value="">Semua Status</option><option value="Menunggu">Menunggu</option><option value="Terverifikasi">Terverifikasi</option><option value="Revisi">Revisi</option></select>
+    <div class="gcard">
+      <div style="padding:12px 18px;border-bottom:1px solid rgba(255,255,255,0.6);display:flex;gap:8px;flex-wrap:wrap">
+        <select class="form-control" id="daf-bulan" style="width:auto" onchange="renderDaftar()"><option value="">Semua Bulan</option>
+          <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option>
+          <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
+          <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
+          <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+        </select>
+        <select class="form-control" id="daf-tahun" style="width:auto" onchange="renderDaftar()"><option value="">Semua Tahun</option><option value="2025">2025</option><option value="2026">2026</option></select>
+        <select class="form-control" id="daf-status" style="width:auto" onchange="renderDaftar()"><option value="">Semua Status</option><option value="Menunggu">Menunggu</option><option value="Terverifikasi">Terverifikasi</option><option value="Revisi">Revisi</option></select>
+      </div>
+      <div style="overflow-x:auto">
+        <table><thead><tr><th>#</th><th>No Pengajuan</th><th>Jenis Bus</th><th>Periode</th><th>PJ</th><th>Nilai Diajukan</th><th>Nilai Disetujui</th><th>Selisih</th><th>Status</th><th>Aksi</th></tr></thead>
+        <tbody id="daftar-body"><tr><td colspan="10" class="text-center" style="padding:24px;color:var(--text3)">Memuat data...</td></tr></tbody></table>
+      </div>
     </div>
-    <div style="overflow-x:auto"><table><thead><tr><th>#</th><th>No Pengajuan</th><th>Jenis Bus</th><th>Periode</th><th>PJ</th><th>Nilai Diajukan</th><th>Nilai Disetujui</th><th>Selisih</th><th>Status</th><th>Aksi</th></tr></thead>
-    <tbody id="daftar-body"><tr><td colspan="10" class="text-center" style="padding:24px;color:var(--text-muted)">Memuat data...</td></tr></tbody></table></div>
   </div>
-</div>
 
-<!-- LAPORAN BULANAN -->
-<div id="page-laporan-bulanan" class="page" style="display:none">
-  <div style="margin-bottom:20px"><div class="page-title">Laporan Bulanan</div><div class="page-sub">Ringkasan verifikasi subsidi per bulan termasuk rincian selisih komponen</div>
-    <div class="page-actions no-print">
+  <!-- ===== LAPORAN PAGES ===== -->
+  <div id="page-laporan-bulanan" class="page">
+    <div class="page-actions no-print" style="display:flex;gap:8px;margin-bottom:16px;align-items:center">
       <select class="form-control" id="lb-bulan" style="width:auto" onchange="renderLapBulanan()"><option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option><option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option><option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option><option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option></select>
       <select class="form-control" id="lb-tahun" style="width:auto" onchange="renderLapBulanan()"><option value="2025" selected>2025</option><option value="2026">2026</option></select>
-      <button class="btn btn-outline" onclick="window.print()">🖨️ Cetak</button>
+      <button class="btn btn-ghost" onclick="window.print()">🖨️ Cetak</button>
     </div>
+    <div id="lap-bulanan-content"></div>
   </div>
-  <div id="lap-bulanan-content"></div>
-</div>
-
-<!-- LAPORAN TRIWULAN -->
-<div id="page-laporan-triwulan" class="page" style="display:none">
-  <div style="margin-bottom:20px"><div class="page-title">Laporan Triwulan</div><div class="page-sub">Rekapitulasi 3 bulan per triwulan</div>
-    <div class="page-actions no-print">
+  <div id="page-laporan-triwulan" class="page">
+    <div class="page-actions no-print" style="display:flex;gap:8px;margin-bottom:16px;align-items:center">
       <select class="form-control" id="ltw-q" style="width:auto" onchange="renderLapTriwulan()"><option value="1">Triwulan I (Jan–Mar)</option><option value="2">Triwulan II (Apr–Jun)</option><option value="3">Triwulan III (Jul–Sep)</option><option value="4">Triwulan IV (Okt–Des)</option></select>
       <select class="form-control" id="ltw-tahun" style="width:auto" onchange="renderLapTriwulan()"><option value="2025" selected>2025</option><option value="2026">2026</option></select>
-      <button class="btn btn-outline" onclick="window.print()">🖨️ Cetak</button>
+      <button class="btn btn-ghost" onclick="window.print()">🖨️ Cetak</button>
     </div>
+    <div id="lap-triwulan-content"></div>
   </div>
-  <div id="lap-triwulan-content"></div>
-</div>
-
-<!-- LAPORAN SEMESTER -->
-<div id="page-laporan-semester" class="page" style="display:none">
-  <div style="margin-bottom:20px"><div class="page-title">Laporan Semester</div><div class="page-sub">Rekapitulasi 6 bulan per semester</div>
-    <div class="page-actions no-print">
+  <div id="page-laporan-semester" class="page">
+    <div class="page-actions no-print" style="display:flex;gap:8px;margin-bottom:16px;align-items:center">
       <select class="form-control" id="ls-sem" style="width:auto" onchange="renderLapSemester()"><option value="1">Semester I (Jan–Jun)</option><option value="2">Semester II (Jul–Des)</option></select>
       <select class="form-control" id="ls-tahun" style="width:auto" onchange="renderLapSemester()"><option value="2025" selected>2025</option><option value="2026">2026</option></select>
-      <button class="btn btn-outline" onclick="window.print()">🖨️ Cetak</button>
+      <button class="btn btn-ghost" onclick="window.print()">🖨️ Cetak</button>
     </div>
+    <div id="lap-semester-content"></div>
   </div>
-  <div id="lap-semester-content"></div>
-</div>
-
-<!-- LAPORAN TAHUNAN -->
-<div id="page-laporan-tahunan" class="page" style="display:none">
-  <div style="margin-bottom:20px"><div class="page-title">Laporan Tahunan</div><div class="page-sub">Rekapitulasi seluruh periode dalam satu tahun</div>
-    <div class="page-actions no-print">
+  <div id="page-laporan-tahunan" class="page">
+    <div class="page-actions no-print" style="display:flex;gap:8px;margin-bottom:16px;align-items:center">
       <select class="form-control" id="lta-tahun" style="width:auto" onchange="renderLapTahunan()"><option value="2025" selected>2025</option><option value="2026">2026</option></select>
-      <button class="btn btn-outline" onclick="window.print()">🖨️ Cetak</button>
+      <button class="btn btn-ghost" onclick="window.print()">🖨️ Cetak</button>
     </div>
+    <div id="lap-tahunan-content"></div>
   </div>
-  <div id="lap-tahunan-content"></div>
-</div>
 
-</main>
+</div><!-- /main -->
 
 <!-- MODAL VERIFIKASI -->
 <div class="modal-overlay" id="modal-verif">
   <div class="modal-box" style="max-width:1000px">
     <div class="modal-header">
       <div class="modal-title">✅ Form Hasil Verifikasi Komponen</div>
-      <button class="btn btn-outline btn-sm" onclick="closeModal('modal-verif')">✕ Tutup</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-verif')">✕ Tutup</button>
     </div>
     <div class="modal-body" id="modal-verif-body"></div>
     <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeModal('modal-verif')">Batal</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-verif')">Batal</button>
       <button class="btn btn-warn" onclick="saveVerifikasi('Revisi')">↩ Tandai Revisi</button>
       <button class="btn btn-success" onclick="saveVerifikasi('Terverifikasi')">✅ Setujui & Simpan</button>
     </div>
@@ -437,144 +813,84 @@ tbody tr:hover{background:var(--surface2)}
 </div>
 
 <script>
-// ===================== SUPABASE CONFIG =====================
-const SUPABASE_URL = 'https://xymvehrgsovzndlqrnak.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_fYFRRK9-blq6zZ1PaDKCyw_ILsWB3Rs';
-const { createClient } = supabase;
-const db = createClient(SUPABASE_URL, SUPABASE_KEY);
+// ====== SUPABASE ======
+const SUPABASE_URL='https://xymvehrgsovzndlqrnak.supabase.co';
+const SUPABASE_KEY='sb_publishable_fYFRRK9-blq6zZ1PaDKCyw_ILsWB3Rs';
+const {createClient}=supabase;
+const supa=createClient(SUPABASE_URL,SUPABASE_KEY);
+let allData=[]; let currentVerifId=null;
 
-let allData = [];
-let currentVerifId = null;
-
-// ===================== TOAST =====================
-function toast(msg, type='info'){
-  const t=document.createElement('div');
-  const colors={info:'#1e40af',success:'#15803d',error:'#b91c1c',warn:'#92400e'};
-  const bg={info:'#dbeafe',success:'#dcfce7',error:'#fee2e2',warn:'#fef3c7'};
-  t.style.cssText=`position:fixed;bottom:24px;right:24px;z-index:9999;padding:12px 18px;border-radius:9px;font-size:13px;font-weight:600;background:${bg[type]};color:${colors[type]};box-shadow:0 4px 16px rgba(0,0,0,.15);transition:opacity .3s;max-width:360px`;
-  t.textContent=msg; document.body.appendChild(t);
-  setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),300);},3000);
+// ====== TOAST ======
+function toast(msg,type='info'){
+  const c=document.getElementById('toast-container');
+  const t=document.createElement('div'); t.className=`toast ${type}`; t.textContent=msg;
+  c.appendChild(t); setTimeout(()=>t.remove(),3200);
 }
 
-function showLoading(show){
-  document.getElementById('app-loading').style.display=show?'flex':'none';
+// ====== DATA ======
+async function fetchAll(){
+  const{data,error}=await supa.from('pengajuan').select('*').order('created_at',{ascending:false});
+  if(error){console.error(error);return[];} return data||[];
+}
+async function reloadData(){
+  allData=await fetchAll(); updateStats();
+  const cur=document.querySelector('.page.active'); if(cur) {
+    const id=cur.id.replace('page-','');
+    if(id==='hasil-verifikasi') renderVfList();
+    if(id==='daftar-pengajuan') renderDaftar();
+  }
+  toast('Data berhasil diperbarui','success');
 }
 
-// ===================== CONSTANTS =====================
-const SATUAN_LIST=['Rupiah','Bulan','Tahun','Unit','Orang','Kali','Liter','Km','Pcs','Set','Paket','Lembar','Rim','Botol','Drum','Penumpang','Hari','Minggu','Trip','Armada'];
-
+// ====== CONSTANTS ======
+const SATUAN_LIST=['Rupiah','Bulan','Tahun','Unit','Orang','Kali','Liter','Km','Pcs','Set','Paket','Lembar','Botol','Drum','Penumpang','Hari','Trip','Armada'];
 const KOMPONEN={
-  inv:[
-    {key:'profisi',label:'Biaya Profisi',satuan:'Rupiah'},
-    {key:'asuransi_kend',label:'Asuransi Kendaraan',satuan:'Bulan'},
-    {key:'asuransi_kredit',label:'Asuransi Kredit',satuan:'Bulan'},
-    {key:'keur_bus',label:'Biaya Keur Bus',satuan:'Kali'},
-    {key:'pkb_stnk',label:'Biaya PKB (STNK)',satuan:'Tahun'},
-    {key:'depresiasi',label:'Nilai Depresiasi',satuan:'Bulan'},
-    {key:'bunga_modal',label:'Biaya Bunga atas Modal',satuan:'Bulan'},
-  ],
-  ops:[
-    {key:'bbm',label:'Biaya BBM',satuan:'Liter'},
-    {key:'ban',label:'Biaya Ban',satuan:'Pcs'},
-    {key:'service_kecil',label:'Biaya Service Kecil',satuan:'Kali'},
-    {key:'service_besar',label:'Biaya Service Besar',satuan:'Kali'},
-    {key:'oli_mesin',label:'Penambahan Oli Mesin',satuan:'Liter'},
-    {key:'perawatan_ac',label:'Perawatan & Perbaikan AC',satuan:'Kali'},
-    {key:'overhoul_mesin',label:'Overhaul Mesin',satuan:'Unit'},
-    {key:'overhoul_body',label:'Overhaul Body',satuan:'Unit'},
-    {key:'suku_cadang',label:'Penggantian Suku Cadang',satuan:'Paket'},
-    {key:'pemeliharaan_body',label:'Pemeliharaan Body',satuan:'Kali'},
-    {key:'cuci_bus',label:'Biaya Cuci Bus',satuan:'Kali'},
-    {key:'retribusi',label:'Biaya Retribusi',satuan:'Bulan'},
-  ],
-  monitor:[
-    {key:'alat_pengawasan',label:'Alat Pengawasan (CCTV/GPS)',satuan:'Unit'},
-    {key:'biaya_layanan',label:'Biaya Layanan Monitoring',satuan:'Bulan'},
-  ],
+  inv:[{key:'profisi',label:'Biaya Profisi',satuan:'Rupiah'},{key:'asuransi_kend',label:'Asuransi Kendaraan',satuan:'Bulan'},{key:'asuransi_kredit',label:'Asuransi Kredit',satuan:'Bulan'},{key:'keur_bus',label:'Biaya Keur Bus',satuan:'Kali'},{key:'pkb_stnk',label:'Biaya PKB (STNK)',satuan:'Tahun'},{key:'depresiasi',label:'Nilai Depresiasi',satuan:'Bulan'},{key:'bunga_modal',label:'Biaya Bunga atas Modal',satuan:'Bulan'}],
+  ops:[{key:'bbm',label:'Biaya BBM',satuan:'Liter'},{key:'ban',label:'Biaya Ban',satuan:'Pcs'},{key:'service_kecil',label:'Biaya Service Kecil',satuan:'Kali'},{key:'service_besar',label:'Biaya Service Besar',satuan:'Kali'},{key:'oli_mesin',label:'Penambahan Oli Mesin',satuan:'Liter'},{key:'perawatan_ac',label:'Perawatan & Perbaikan AC',satuan:'Kali'},{key:'overhoul_mesin',label:'Overhaul Mesin',satuan:'Unit'},{key:'overhoul_body',label:'Overhaul Body',satuan:'Unit'},{key:'suku_cadang',label:'Penggantian Suku Cadang',satuan:'Paket'},{key:'pemeliharaan_body',label:'Pemeliharaan Body',satuan:'Kali'},{key:'cuci_bus',label:'Biaya Cuci Bus',satuan:'Kali'},{key:'retribusi',label:'Biaya Retribusi',satuan:'Bulan'}],
+  monitor:[{key:'alat_pengawasan',label:'Alat Pengawasan (CCTV/GPS)',satuan:'Unit'},{key:'biaya_layanan',label:'Biaya Layanan Monitoring',satuan:'Bulan'}],
   pramudi:[{key:'pramudi',label:'Biaya Awak Kendaraan Pramudi',satuan:'Orang'}],
-  fasilitas:[
-    {key:'pneumatic_door',label:'Pneumatic Door',satuan:'Unit'},
-    {key:'rak_sepeda',label:'Rak Sepeda',satuan:'Unit'},
-    {key:'penetralisir_ion',label:'Penetralisir ION & Penyaring Udara',satuan:'Unit'},
-  ],
+  fasilitas:[{key:'pneumatic_door',label:'Pneumatic Door',satuan:'Unit'},{key:'rak_sepeda',label:'Rak Sepeda',satuan:'Unit'},{key:'penetralisir_ion',label:'Penetralisir ION & Penyaring Udara',satuan:'Unit'}],
   asuransi:[{key:'asuransi_penumpang',label:'Biaya Asuransi Penumpang',satuan:'Penumpang'}],
-  pegawai:[
-    {key:'manajer',label:'Manajer',satuan:'Orang'},
-    {key:'kabeng',label:'Kepala Bengkel & Gudang',satuan:'Orang'},
-    {key:'kabag_ops',label:'Kepala Bagian Operasi',satuan:'Orang'},
-    {key:'kabag_adm',label:'Kepala Bagian Adm & Keuangan',satuan:'Orang'},
-    {key:'staf_bengkel',label:'Staf Bengkel & Gudang',satuan:'Orang'},
-    {key:'staf_ops',label:'Staf Operasional',satuan:'Orang'},
-    {key:'staf_adm',label:'Staf Adm & Keuangan',satuan:'Orang'},
-    {key:'mekanik',label:'Mekanik',satuan:'Orang'},
-    {key:'security',label:'Security',satuan:'Orang'},
-  ],
-  kelola:[
-    {key:'sewa_kantor',label:'Sewa Kantor, Pool & Bengkel',satuan:'Bulan'},
-    {key:'peny_kantor',label:'Penyusutan Peralatan Kantor',satuan:'Bulan'},
-    {key:'peny_pool',label:'Penyusutan Peralatan Pool & Bengkel',satuan:'Bulan'},
-    {key:'maint_kantor',label:'Pemeliharaan Kantor, Bengkel & Peralatan',satuan:'Kali'},
-    {key:'adm_kantor',label:'Biaya Administrasi Kantor',satuan:'Bulan'},
-    {key:'listrik_air',label:'Biaya Listrik, Air & Telepon',satuan:'Bulan'},
-    {key:'perjalanan_dinas',label:'Perjalanan Dinas & Rapat Evaluasi',satuan:'Kali'},
-    {key:'izin_usaha',label:'Biaya Izin Usaha',satuan:'Tahun'},
-    {key:'izin_trayek',label:'Biaya Izin Trayek',satuan:'Tahun'},
-    {key:'lain_lain',label:'Biaya Lain-lain',satuan:'Rupiah'},
-  ],
-  pendukung:[
-    {key:'mesin_tiket',label:'Pengadaan/Sewa/Pemeliharaan Mesin Tiket & Teknologi',satuan:'Unit'},
-    {key:'pramugara',label:'Biaya Pramugara/Pramugari',satuan:'Orang'},
-    {key:'petugas_halte',label:'Biaya Petugas Halte',satuan:'Orang'},
-    {key:'bencana',label:'Biaya dalam Hal Bencana',satuan:'Rupiah'},
-    {key:'hidangan_rapat',label:'Biaya Hidangan Rapat Evaluasi & Verifikasi',satuan:'Kali'},
-  ],
-  tiket:[
-    {key:'tiket_tunai',label:'Pendapatan Tiket Tunai',satuan:'Rupiah'},
-    {key:'tiket_nontunai',label:'Pendapatan Non Tunai',satuan:'Rupiah'},
-  ],
-  pendapatan_lain:[
-    {key:'branding',label:'Pendapatan Branding',satuan:'Bulan'},
-    {key:'spare_part_bekas',label:'Pendapatan Spare Part Bekas',satuan:'Rupiah'},
-  ],
+  pegawai:[{key:'manajer',label:'Manajer',satuan:'Orang'},{key:'kabeng',label:'Kepala Bengkel & Gudang',satuan:'Orang'},{key:'kabag_ops',label:'Kepala Bagian Operasi',satuan:'Orang'},{key:'kabag_adm',label:'Kepala Bagian Adm & Keuangan',satuan:'Orang'},{key:'staf_bengkel',label:'Staf Bengkel & Gudang',satuan:'Orang'},{key:'staf_ops',label:'Staf Operasional',satuan:'Orang'},{key:'staf_adm',label:'Staf Adm & Keuangan',satuan:'Orang'},{key:'mekanik',label:'Mekanik',satuan:'Orang'},{key:'security',label:'Security',satuan:'Orang'}],
+  kelola:[{key:'sewa_kantor',label:'Sewa Kantor, Pool & Bengkel',satuan:'Bulan'},{key:'peny_kantor',label:'Penyusutan Peralatan Kantor',satuan:'Bulan'},{key:'peny_pool',label:'Penyusutan Peralatan Pool & Bengkel',satuan:'Bulan'},{key:'maint_kantor',label:'Pemeliharaan Kantor, Bengkel & Peralatan',satuan:'Kali'},{key:'adm_kantor',label:'Biaya Administrasi Kantor',satuan:'Bulan'},{key:'listrik_air',label:'Biaya Listrik, Air & Telepon',satuan:'Bulan'},{key:'perjalanan_dinas',label:'Perjalanan Dinas & Rapat Evaluasi',satuan:'Kali'},{key:'izin_usaha',label:'Biaya Izin Usaha',satuan:'Tahun'},{key:'izin_trayek',label:'Biaya Izin Trayek',satuan:'Tahun'},{key:'lain_lain',label:'Biaya Lain-lain',satuan:'Rupiah'}],
+  pendukung:[{key:'mesin_tiket',label:'Pengadaan/Sewa/Pemeliharaan Mesin Tiket & Teknologi',satuan:'Unit'},{key:'pramugara',label:'Biaya Pramugara/Pramugari',satuan:'Orang'},{key:'petugas_halte',label:'Biaya Petugas Halte',satuan:'Orang'},{key:'bencana',label:'Biaya dalam Hal Bencana',satuan:'Rupiah'},{key:'hidangan_rapat',label:'Biaya Hidangan Rapat Evaluasi & Verifikasi',satuan:'Kali'}],
+  tiket:[{key:'tiket_tunai',label:'Pendapatan Tiket Tunai',satuan:'Rupiah'},{key:'tiket_nontunai',label:'Pendapatan Non Tunai',satuan:'Rupiah'}],
+  pendapatan_lain:[{key:'branding',label:'Pendapatan Branding',satuan:'Bulan'},{key:'spare_part_bekas',label:'Pendapatan Spare Part Bekas',satuan:'Rupiah'}],
 };
-
 const BIAYA_GROUPS=['inv','ops','monitor','pramudi','fasilitas','asuransi','pegawai','kelola'];
 const PENDUKUNG_GROUPS=['pendukung'];
 const PENDAPATAN_GROUPS=['tiket','pendapatan_lain'];
-const GROUP_LABELS={inv:'A① Biaya Investasi & Administrasi Kendaraan',ops:'A② Biaya Operasional & Pemeliharaan',monitor:'A③ Sistem Monitoring Keselamatan',pramudi:'A④ Biaya Awak Kendaraan (Pramudi)',fasilitas:'A⑤ Peningkatan Fasilitas Armada',asuransi:'A⑥ Asuransi Penumpang',pegawai:'B① Biaya Pegawai Kantor, Pool & Bengkel',kelola:'B② Biaya Pengelolaan',pendukung:'C. Biaya Pendukung',tiket:'D① Pendapatan Tiket',pendapatan_lain:'D② Pendapatan Lain-lain'};
+const GL={inv:'A① Biaya Investasi & Administrasi Kendaraan',ops:'A② Biaya Operasional & Pemeliharaan',monitor:'A③ Sistem Monitoring Keselamatan',pramudi:'A④ Biaya Awak Kendaraan (Pramudi)',fasilitas:'A⑤ Peningkatan Fasilitas Armada',asuransi:'A⑥ Asuransi Penumpang',pegawai:'B① Biaya Pegawai Kantor, Pool & Bengkel',kelola:'B② Biaya Pengelolaan',pendukung:'C. Biaya Pendukung',tiket:'D① Pendapatan Tiket',pendapatan_lain:'D② Pendapatan Lain-lain'};
 
-// ===================== FORM RENDER =====================
-function mkSat(key,def){return `<select id="sat-${key}">${SATUAN_LIST.map(s=>`<option${s===def?' selected':''}>${s}</option>`).join('')}</select>`;}
-
+// ====== FORM ======
+function mkSat(key,def){return`<select id="sat-${key}">${SATUAN_LIST.map(s=>`<option${s===def?' selected':''}>${s}</option>`).join('')}</select>`;}
 function renderCompRows(cid,group){
-  const el=document.getElementById(cid); if(!el) return;
+  const el=document.getElementById(cid);if(!el)return;
   let h=`<table class="comp-table"><thead><tr><th style="width:22%">Deskripsi</th><th style="width:11%">Satuan</th><th style="width:13%">Harga Satuan (Rp)</th><th style="width:7%">QTY</th><th style="width:13%">Total (Rp)</th><th style="width:22%">Keterangan</th><th style="width:12%">Berkas</th></tr></thead><tbody>`;
   KOMPONEN[group].forEach(item=>{
     h+=`<tr><td class="desc-cell">${item.label}</td><td>${mkSat(item.key,item.satuan)}</td>
     <td><input type="number" min="0" id="hs-${item.key}" placeholder="0" oninput="calcTotal('${item.key}')"></td>
     <td><input type="number" min="0" id="qty-${item.key}" placeholder="0" oninput="calcTotal('${item.key}')"></td>
     <td class="tot-cell" id="tot-${item.key}">0</td>
-    <td><textarea id="ket-${item.key}" rows="1" placeholder="Keterangan realisasi..." style="min-height:30px;resize:vertical"></textarea></td>
-    <td style="text-align:center"><label class="file-label" title="Upload berkas">📎 <span id="ftxt-${item.key}">Unggah</span><input type="file" accept=".pdf,.jpg,.png,.jpeg" style="display:none" id="file-${item.key}" onchange="markFile('${item.key}')"></label></td>
+    <td><textarea id="ket-${item.key}" rows="1" placeholder="Keterangan..." style="min-height:30px;resize:vertical"></textarea></td>
+    <td style="text-align:center"><label class="file-label">📎 <span id="ftxt-${item.key}">Unggah</span><input type="file" accept=".pdf,.jpg,.png" style="display:none" id="file-${item.key}" onchange="markFile('${item.key}')"></label></td>
     </tr>`;
   });
-  h+='</tbody></table>';
-  el.innerHTML=h;
+  h+='</tbody></table>'; el.innerHTML=h;
 }
-
 function calcTotal(key){
   const hs=parseFloat(document.getElementById('hs-'+key)?.value||0);
   const qty=parseFloat(document.getElementById('qty-'+key)?.value||0);
   const el=document.getElementById('tot-'+key); if(el) el.textContent=fmtNum(hs*qty);
   updateSummary();
 }
-function markFile(key){const f=document.getElementById('file-'+key);const t=document.getElementById('ftxt-'+key);if(f?.files?.length&&t){t.textContent='✔ '+f.files[0].name.slice(0,12);t.style.color='var(--success)';}}
+function markFile(key){const f=document.getElementById('file-'+key);const t=document.getElementById('ftxt-'+key);if(f?.files?.length&&t){t.textContent='✔ '+f.files[0].name.slice(0,12);t.style.color='var(--green)';}}
 function fmtNum(n){return(!n||isNaN(n))?'0':Math.round(n).toLocaleString('id-ID');}
 function fmtRp(n){return'Rp '+fmtNum(n);}
-function getGrpTot(g){return KOMPONEN[g].reduce((s,item)=>{const hs=parseFloat(document.getElementById('hs-'+item.key)?.value||0);const qty=parseFloat(document.getElementById('qty-'+item.key)?.value||0);return s+hs*qty;},0);}
+function getGT(g){return KOMPONEN[g].reduce((s,i)=>{const hs=parseFloat(document.getElementById('hs-'+i.key)?.value||0);const qty=parseFloat(document.getElementById('qty-'+i.key)?.value||0);return s+hs*qty;},0);}
 function updateSummary(){
-  const bp=BIAYA_GROUPS.reduce((s,g)=>s+getGrpTot(g),0);
-  const ku=bp*.07, pd=PENDUKUNG_GROUPS.reduce((s,g)=>s+getGrpTot(g),0), pp=PENDAPATAN_GROUPS.reduce((s,g)=>s+getGrpTot(g),0);
+  const bp=BIAYA_GROUPS.reduce((s,g)=>s+getGT(g),0);
+  const ku=bp*.07,pd=PENDUKUNG_GROUPS.reduce((s,g)=>s+getGT(g),0),pp=PENDAPATAN_GROUPS.reduce((s,g)=>s+getGT(g),0);
   document.getElementById('sum-biaya-pokok').textContent=fmtRp(bp);
   document.getElementById('sum-keuntungan').textContent=fmtRp(ku);
   document.getElementById('sum-pendukung').textContent=fmtRp(pd);
@@ -591,120 +907,85 @@ function collectForm(){
   return data;
 }
 
-// ===================== SUPABASE CRUD =====================
-async function fetchAll(){
-  const {data,error}=await db.from('pengajuan').select('*').order('created_at',{ascending:false});
-  if(error){console.error(error);return[];}
-  return data||[];
-}
-
-function genNo(bulan,tahun){
-  const existing=allData.filter(p=>p.tahun==tahun&&p.bulan==bulan).length;
-  const seq=(existing+1).toString().padStart(3,'0');
-  return `PVS/${tahun}/${String(bulan).padStart(2,'0')}/${seq}`;
-}
+// ====== CRUD ======
+function genNo(b,y){const ex=allData.filter(p=>p.tahun==y&&p.bulan==b).length;return`PVS/${y}/${String(b).padStart(2,'0')}/${(ex+1).toString().padStart(3,'0')}`;}
 
 async function savePengajuan(){
   const jenis=document.getElementById('f-jenis').value;
   const bulan=document.getElementById('f-bulan').value;
   const tahun=document.getElementById('f-tahun').value;
   if(!jenis||!bulan){toast('Jenis bus dan periode bulan wajib diisi!','error');return;}
-  const btn=document.getElementById('btn-simpan');
-  btn.disabled=true; btn.textContent='⏳ Menyimpan...';
+  const btn=document.getElementById('btn-simpan');btn.disabled=true;btn.textContent='⏳ Menyimpan...';
   const kd=collectForm();
   const bp=BIAYA_GROUPS.reduce((s,g)=>s+Object.values(kd[g]).reduce((a,v)=>a+v.total,0),0);
-  const ku=bp*.07, pd=PENDUKUNG_GROUPS.reduce((s,g)=>s+Object.values(kd[g]).reduce((a,v)=>a+v.total,0),0);
-  const pp=PENDAPATAN_GROUPS.reduce((s,g)=>s+Object.values(kd[g]).reduce((a,v)=>a+v.total,0),0);
-  const payload={
-    id:Date.now().toString(), no:genNo(bulan,tahun),
-    jenis, bulan:parseInt(bulan), tahun:parseInt(tahun),
-    tgl:document.getElementById('f-tgl').value,
-    pj:document.getElementById('f-pj').value,
-    catatan:document.getElementById('f-catatan').value,
-    komp_data:kd, biaya_pokok:bp, keuntungan:ku, pendukung:pd, pendapatan:pp,
-    nilai_pengajuan:bp+ku+pd-pp,
-    status:'Menunggu', nilai_disetujui:null, verif_detail:{}, selisih_detail:[],
-    catatan_verif:'', tgl_verif:null
-  };
-  const {error}=await db.from('pengajuan').insert(payload);
-  btn.disabled=false; btn.textContent='💾 Simpan ke Supabase';
+  const ku=bp*.07,pd=PENDUKUNG_GROUPS.reduce((s,g)=>s+Object.values(kd[g]).reduce((a,v)=>a+v.total,0),0),pp=PENDAPATAN_GROUPS.reduce((s,g)=>s+Object.values(kd[g]).reduce((a,v)=>a+v.total,0),0);
+  const payload={id:Date.now().toString(),no:genNo(bulan,tahun),jenis,bulan:parseInt(bulan),tahun:parseInt(tahun),tgl:document.getElementById('f-tgl').value,pj:document.getElementById('f-pj').value,catatan:document.getElementById('f-catatan').value,komp_data:kd,biaya_pokok:bp,keuntungan:ku,pendukung:pd,pendapatan:pp,nilai_pengajuan:bp+ku+pd-pp,status:'Menunggu',nilai_disetujui:null,verif_detail:{},selisih_detail:[],catatan_verif:'',tgl_verif:null};
+  const{error}=await supa.from('pengajuan').insert(payload);
+  btn.disabled=false;btn.textContent='💾 Simpan ke Supabase';
   if(error){toast('Gagal menyimpan: '+error.message,'error');return;}
   toast(`✅ Pengajuan ${payload.no} berhasil disimpan!`,'success');
-  allData=[payload,...allData];
-  resetForm(); showPage('daftar-pengajuan');
+  allData=[payload,...allData]; resetForm(); showPage('daftar-pengajuan');
 }
 
 async function saveVerifikasi(status){
-  const p=allData.find(x=>x.id===currentVerifId); if(!p) return;
-  let total=0; const vd={}, sel=[];
-  Object.keys(p.komp_data).forEach(g=>{
-    vd[g]={};
-    Object.keys(p.komp_data[g]).forEach(key=>{
-      const el=document.getElementById(`vv-${g}-${key}`);
-      const ketEl=document.getElementById(`ketv-${g}-${key}`);
-      if(el){
-        const val=parseFloat(el.value||0), ket=ketEl?.value||'', orig=p.komp_data[g][key].total, diff=val-orig;
-        total+=val; vd[g][key]={nilaiDisetujui:val,keteranganSelisih:ket};
-        if(Math.abs(diff)>0) sel.push({group:g,key,label:p.komp_data[g][key].label,satuan:p.komp_data[g][key].satuan,nilaiDiajukan:orig,nilaiDisetujui:val,selisih:diff,keterangan:ket});
-      }
-    });
-  });
+  const p=allData.find(x=>x.id===currentVerifId);if(!p)return;
+  let total=0;const vd={},sel=[];
+  Object.keys(p.komp_data).forEach(g=>{vd[g]={};Object.keys(p.komp_data[g]).forEach(key=>{
+    const el=document.getElementById(`vv-${g}-${key}`);const ketEl=document.getElementById(`ketv-${g}-${key}`);
+    if(el){const val=parseFloat(el.value||0),ket=ketEl?.value||'',orig=p.komp_data[g][key].total,diff=val-orig;
+    total+=val;vd[g][key]={nilaiDisetujui:val,keteranganSelisih:ket};
+    if(Math.abs(diff)>0)sel.push({group:g,key,label:p.komp_data[g][key].label,satuan:p.komp_data[g][key].satuan,nilaiDiajukan:orig,nilaiDisetujui:val,selisih:diff,keterangan:ket});}
+  });});
   const catatan=document.getElementById('vv-catatan')?.value||'';
-  const tglVerif=new Date().toISOString().split('T')[0];
-  const {error}=await db.from('pengajuan').update({status,nilai_disetujui:total,verif_detail:vd,selisih_detail:sel,catatan_verif:catatan,tgl_verif:tglVerif}).eq('id',currentVerifId);
-  if(error){toast('Gagal menyimpan verifikasi: '+error.message,'error');return;}
+  const tglV=new Date().toISOString().split('T')[0];
+  const{error}=await supa.from('pengajuan').update({status,nilai_disetujui:total,verif_detail:vd,selisih_detail:sel,catatan_verif:catatan,tgl_verif:tglV}).eq('id',currentVerifId);
+  if(error){toast('Gagal menyimpan: '+error.message,'error');return;}
   const idx=allData.findIndex(x=>x.id===currentVerifId);
-  if(idx>=0) allData[idx]={...allData[idx],status,nilai_disetujui:total,verif_detail:vd,selisih_detail:sel,catatan_verif:catatan,tgl_verif:tglVerif};
-  closeModal('modal-verif'); updateStats(); renderVfList();
-  toast(`✅ Pengajuan ${p.no} berhasil ${status==='Terverifikasi'?'disetujui':'ditandai Revisi'}!`,'success');
+  if(idx>=0)allData[idx]={...allData[idx],status,nilai_disetujui:total,verif_detail:vd,selisih_detail:sel,catatan_verif:catatan,tgl_verif:tglV};
+  closeModal('modal-verif');updateStats();renderVfList();
+  toast(`✅ ${p.no} ${status==='Terverifikasi'?'disetujui':'ditandai Revisi'}!`,'success');
 }
 
 async function hapus(id){
-  if(!confirm('Hapus pengajuan ini? Data tidak dapat dikembalikan.')) return;
-  const {error}=await db.from('pengajuan').delete().eq('id',id);
+  if(!confirm('Hapus pengajuan ini? Data tidak dapat dikembalikan.'))return;
+  const{error}=await supa.from('pengajuan').delete().eq('id',id);
   if(error){toast('Gagal hapus: '+error.message,'error');return;}
-  allData=allData.filter(p=>p.id!==id);
-  updateStats(); renderDaftar();
+  allData=allData.filter(p=>p.id!==id);updateStats();renderDaftar();
   toast('Data berhasil dihapus','success');
 }
 
-// ===================== RESET FORM =====================
 function resetForm(){
   ['f-jenis','f-bulan'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   ['f-catatan','f-pj'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  Object.keys(KOMPONEN).forEach(g=>{KOMPONEN[g].forEach(item=>{
+  Object.keys(KOMPONEN).forEach(g=>KOMPONEN[g].forEach(item=>{
     ['hs-','qty-'].forEach(p=>{const el=document.getElementById(p+item.key);if(el)el.value='';});
     const t=document.getElementById('tot-'+item.key);if(t)t.textContent='0';
     const k=document.getElementById('ket-'+item.key);if(k)k.value='';
     const ft=document.getElementById('ftxt-'+item.key);if(ft){ft.textContent='Unggah';ft.style.color='';}
-  });});
+  }));
   updateSummary();
 }
 
-// ===================== RENDER LISTS =====================
+// ====== RENDER LISTS ======
 function renderVfList(){
-  const bulan=document.getElementById('vf-bulan')?.value;
-  const tahun=document.getElementById('vf-tahun')?.value;
-  const status=document.getElementById('vf-status')?.value;
+  const b=document.getElementById('vf-bulan')?.value,t=document.getElementById('vf-tahun')?.value,s=document.getElementById('vf-status')?.value;
   let data=[...allData];
-  if(bulan) data=data.filter(p=>p.bulan==bulan);
-  if(tahun) data=data.filter(p=>p.tahun==tahun);
-  if(status) data=data.filter(p=>p.status===status);
-  const tb=document.getElementById('vf-list-body'); if(!tb) return;
-  if(!data.length){tb.innerHTML='<tr><td colspan="9" class="text-center" style="padding:24px;color:var(--text-muted)">Tidak ada data</td></tr>';return;}
+  if(b)data=data.filter(p=>p.bulan==b);if(t)data=data.filter(p=>p.tahun==t);if(s)data=data.filter(p=>p.status===s);
+  const tb=document.getElementById('vf-list-body');if(!tb)return;
+  if(!data.length){tb.innerHTML='<tr><td colspan="9" class="text-center" style="padding:24px;color:var(--text3)">Tidak ada data</td></tr>';return;}
   tb.innerHTML=data.map(p=>{
     const sel=p.nilai_disetujui!==null?p.nilai_disetujui-p.nilai_pengajuan:null;
-    const jSel=(p.selisih_detail||[]).length;
-    return `<tr>
+    const jS=(p.selisih_detail||[]).length;
+    return`<tr>
       <td class="td-mono">${p.no}</td>
-      <td><span class="badge ${p.jenis==='Bus Listrik'?'badge-green':'badge-blue'}">${p.jenis}</span></td>
+      <td><span class="badge ${p.jenis==='Bus Listrik'?'badge-green':'badge-purple'}">${p.jenis}</span></td>
       <td>${namaBulan(p.bulan)} ${p.tahun}</td>
       <td class="td-mono text-right">${fmtRp(p.nilai_pengajuan)}</td>
       <td class="td-mono text-right">${p.nilai_disetujui!==null?fmtRp(p.nilai_disetujui):'–'}</td>
-      <td class="td-mono text-right" style="color:${sel===null?'inherit':sel<0?'var(--danger)':'var(--success)'}">
+      <td class="td-mono text-right" style="color:${sel===null?'inherit':sel<0?'var(--red)':'var(--green)'}">
         ${sel!==null?(sel>=0?'+':'')+fmtRp(Math.abs(sel)):'–'}</td>
-      <td class="text-center">${jSel?`<span class="badge badge-orange">${jSel} komp</span>`:'–'}</td>
-      <td>${badgeStatus(p.status)}</td>
+      <td class="text-center">${jS?`<span class="badge badge-orange">${jS}</span>`:'–'}</td>
+      <td>${badgeSt(p.status)}</td>
       <td><button class="btn btn-primary btn-sm" onclick="openVerifModal('${p.id}')">${p.status==='Menunggu'?'✅ Verifikasi':'👁 Detail'}</button></td>
     </tr>`;
   }).join('');
@@ -712,55 +993,52 @@ function renderVfList(){
 
 function openVerifModal(id){
   currentVerifId=id;
-  const p=allData.find(x=>x.id===id); if(!p) return;
-  let html=`<div class="alert alert-warn">⚠️ Masukkan nilai yang disetujui per komponen. Isi <strong>Keterangan Selisih</strong> untuk setiap komponen yang berbeda.</div>`;
-  html+=`<div class="form-grid g3 mb-12" style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px">
+  const p=allData.find(x=>x.id===id);if(!p)return;
+  let html=`<div class="alert alert-warn">⚠️ Masukkan nilai yang disetujui per komponen. Isi <strong>Keterangan Selisih</strong> jika ada perbedaan.</div>`;
+  html+=`<div class="form-grid g3 mb-12" style="background:rgba(124,111,247,0.05);border:1px solid rgba(124,111,247,0.15);border-radius:12px;padding:12px">
     <div><div class="form-label">No Pengajuan</div><div class="font-mono" style="font-weight:700">${p.no}</div></div>
     <div><div class="form-label">Periode</div><div>${namaBulan(p.bulan)} ${p.tahun}</div></div>
     <div><div class="form-label">Jenis Bus</div><div>${p.jenis}</div></div>
   </div>`;
   html+=`<div style="overflow-x:auto"><table class="verif-table"><thead><tr>
-    <th style="width:22%">Deskripsi Komponen</th><th style="width:9%">Satuan</th>
+    <th style="width:22%">Deskripsi</th><th style="width:9%">Satuan</th>
     <th style="width:10%">Harga Satuan</th><th style="width:6%">QTY</th>
     <th style="width:11%">Nilai Diajukan</th><th style="width:12%">Nilai Disetujui</th>
     <th style="width:11%">Selisih</th><th style="width:19%">Keterangan Selisih</th>
   </tr></thead><tbody>`;
   Object.keys(p.komp_data).forEach(group=>{
-    const anyFilled=Object.values(p.komp_data[group]).some(v=>v.total>0||v.hs>0);
-    if(!anyFilled) return;
-    html+=`<tr class="verif-group-row"><td colspan="8">${GROUP_LABELS[group]||group}</td></tr>`;
+    const anyF=Object.values(p.komp_data[group]).some(v=>v.total>0||v.hs>0);if(!anyF)return;
+    html+=`<tr class="verif-group-row"><td colspan="8">${GL[group]||group}</td></tr>`;
     Object.keys(p.komp_data[group]).forEach(key=>{
-      const item=p.komp_data[group][key];
-      if(!item.hs&&!item.qty&&!item.total) return;
-      const existV=p.verif_detail?.[group]?.[key];
-      const vVal=existV!=null?existV.nilaiDisetujui:item.total;
-      const vKet=existV?.keteranganSelisih||'';
-      const sel=vVal-item.total;
+      const item=p.komp_data[group][key];if(!item.hs&&!item.qty&&!item.total)return;
+      const eV=p.verif_detail?.[group]?.[key];
+      const vVal=eV!=null?eV.nilaiDisetujui:item.total;
+      const vKet=eV?.keteranganSelisih||'';const sel=vVal-item.total;
       html+=`<tr>
-        <td><div style="font-weight:600">${item.label}</div>${item.keterangan?`<div style="font-size:10px;color:var(--text-muted);font-style:italic;margin-top:2px">📝 ${item.keterangan}</div>`:''}</td>
-        <td style="text-align:center"><span class="badge badge-gray">${item.satuan}</span></td>
+        <td><div style="font-weight:600">${item.label}</div>${item.keterangan?`<div style="font-size:10px;color:var(--text3);font-style:italic">📝 ${item.keterangan}</div>`:''}</td>
+        <td class="text-center"><span class="badge badge-gray">${item.satuan}</span></td>
         <td class="td-mono text-right">${fmtRp(item.hs)}</td>
         <td class="text-center">${fmtNum(item.qty)}</td>
         <td class="td-mono text-right">${fmtRp(item.total)}</td>
         <td><input type="number" value="${vVal}" id="vv-${group}-${key}" oninput="recalcRow('${group}','${key}',${item.total})"></td>
-        <td class="td-mono text-right" id="sel-${group}-${key}" style="font-weight:700;color:${sel<0?'var(--danger)':sel>0?'var(--success)':'var(--text-muted)'}">
+        <td class="td-mono text-right" id="sel-${group}-${key}" style="font-weight:700;color:${sel<0?'var(--red)':sel>0?'var(--green)':'var(--text3)'}">
           ${sel!==0?(sel>0?'+':'')+fmtRp(Math.abs(sel)):'–'}</td>
-        <td><textarea id="ketv-${group}-${key}" rows="1" placeholder="${sel!==0?'Wajib isi alasan selisih...':'Opsional...'}" style="min-height:30px;resize:vertical;border-color:${sel!==0?'var(--warn)':'var(--border)'}">${vKet}</textarea></td>
+        <td><textarea id="ketv-${group}-${key}" rows="1" placeholder="${sel!==0?'Wajib isi alasan..':'Opsional..'}" style="min-height:30px;resize:vertical;border-color:${sel!==0?'rgba(249,115,22,0.4)':'rgba(124,111,247,0.2)'}">${vKet}</textarea></td>
       </tr>`;
     });
   });
   html+=`</tbody></table></div>`;
   html+=`<div class="two-col mt-12">
-    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px">
-      <div style="font-weight:700;font-size:12px;color:var(--primary);margin-bottom:8px">📋 Nilai Diajukan</div>
-      <div class="sum-row"><span class="sum-lbl">Biaya Pokok (A+B)</span><span class="sum-val">${fmtRp(p.biaya_pokok)}</span></div>
+    <div style="background:rgba(124,111,247,0.06);border:1px solid rgba(124,111,247,0.15);border-radius:12px;padding:14px">
+      <div style="font-weight:700;font-size:12px;color:var(--purple);margin-bottom:8px">📋 Nilai Diajukan</div>
+      <div class="sum-row"><span class="sum-lbl">Biaya Pokok</span><span class="sum-val">${fmtRp(p.biaya_pokok)}</span></div>
       <div class="sum-row"><span class="sum-lbl">Keuntungan 7%</span><span class="sum-val">${fmtRp(p.keuntungan)}</span></div>
-      <div class="sum-row"><span class="sum-lbl">Biaya Pendukung (C)</span><span class="sum-val">${fmtRp(p.pendukung)}</span></div>
-      <div class="sum-row"><span class="sum-lbl">Pendapatan (D)</span><span class="sum-val">(${fmtRp(p.pendapatan)})</span></div>
-      <div class="sum-row"><span class="sum-lbl" style="color:var(--primary);font-weight:700">Subsidi Diajukan</span><span class="sum-val" style="color:var(--primary)">${fmtRp(p.nilai_pengajuan)}</span></div>
+      <div class="sum-row"><span class="sum-lbl">Biaya Pendukung</span><span class="sum-val">${fmtRp(p.pendukung)}</span></div>
+      <div class="sum-row"><span class="sum-lbl">Pendapatan</span><span class="sum-val">(${fmtRp(p.pendapatan)})</span></div>
+      <div class="sum-row"><span class="sum-lbl" style="color:var(--purple);font-weight:700">Subsidi Diajukan</span><span class="sum-val" style="color:var(--purple)">${fmtRp(p.nilai_pengajuan)}</span></div>
     </div>
-    <div style="background:#fff8f0;border:1px solid #fbd5aa;border-radius:8px;padding:14px">
-      <div style="font-weight:700;font-size:12px;color:var(--accent);margin-bottom:8px">✅ Hasil Verifikasi (Live)</div>
+    <div style="background:rgba(249,115,22,0.05);border:1px solid rgba(249,115,22,0.2);border-radius:12px;padding:14px">
+      <div style="font-weight:700;font-size:12px;color:var(--accent);margin-bottom:8px">✅ Hasil Verifikasi</div>
       <div class="sum-row"><span class="sum-lbl">Total Disetujui</span><span class="sum-val" id="vv-tot">–</span></div>
       <div class="sum-row"><span class="sum-lbl">Selisih Total</span><span class="sum-val" id="vv-sel">–</span></div>
       <div class="sum-row"><span class="sum-lbl">Komponen Selisih</span><span class="sum-val" id="vv-jml">–</span></div>
@@ -773,56 +1051,48 @@ function openVerifModal(id){
   recalcVerifTotal();
 }
 
-function recalcRow(group,key,nilaiAjuan){
-  const el=document.getElementById(`vv-${group}-${key}`);
-  const selEl=document.getElementById(`sel-${group}-${key}`);
-  const ketEl=document.getElementById(`ketv-${group}-${key}`);
-  if(!el||!selEl) return;
-  const val=parseFloat(el.value||0), orig=parseFloat(nilaiAjuan), sel=val-orig;
+function recalcRow(group,key,orig){
+  const el=document.getElementById(`vv-${group}-${key}`),selEl=document.getElementById(`sel-${group}-${key}`),ketEl=document.getElementById(`ketv-${group}-${key}`);
+  if(!el||!selEl)return;
+  const val=parseFloat(el.value||0),sel=val-parseFloat(orig);
   selEl.textContent=sel!==0?(sel>0?'+':'')+fmtRp(Math.abs(sel)):'–';
-  selEl.style.color=sel<0?'var(--danger)':sel>0?'var(--success)':'var(--text-muted)';
-  if(ketEl){ketEl.placeholder=sel!==0?'Wajib isi alasan selisih...':'Opsional...';ketEl.style.borderColor=sel!==0?'var(--warn)':'var(--border)';}
+  selEl.style.color=sel<0?'var(--red)':sel>0?'var(--green)':'var(--text3)';
+  if(ketEl){ketEl.placeholder=sel!==0?'Wajib isi alasan selisih...':'Opsional...';ketEl.style.borderColor=sel!==0?'rgba(249,115,22,0.4)':'rgba(124,111,247,0.2)';}
   recalcVerifTotal();
 }
-
 function recalcVerifTotal(){
-  const p=allData.find(x=>x.id===currentVerifId); if(!p) return;
-  let total=0,jmlSel=0;
-  Object.keys(p.komp_data).forEach(g=>{Object.keys(p.komp_data[g]).forEach(key=>{
+  const p=allData.find(x=>x.id===currentVerifId);if(!p)return;
+  let total=0,jml=0;
+  Object.keys(p.komp_data).forEach(g=>Object.keys(p.komp_data[g]).forEach(key=>{
     const el=document.getElementById(`vv-${g}-${key}`);
-    if(el){const val=parseFloat(el.value||0);total+=val;if(Math.abs(val-p.komp_data[g][key].total)>0)jmlSel++;}
-  });});
+    if(el){const val=parseFloat(el.value||0);total+=val;if(Math.abs(val-p.komp_data[g][key].total)>0)jml++;}
+  }));
   const sel=total-p.nilai_pengajuan;
   const eT=document.getElementById('vv-tot');if(eT)eT.textContent=fmtRp(total);
-  const eS=document.getElementById('vv-sel');if(eS){eS.textContent=(sel>=0?'+':'')+fmtRp(Math.abs(sel));eS.style.color=sel<0?'var(--danger)':sel>0?'var(--success)':'inherit';eS.style.fontWeight='700';}
-  const eJ=document.getElementById('vv-jml');if(eJ)eJ.textContent=jmlSel+' komponen';
+  const eS=document.getElementById('vv-sel');if(eS){eS.textContent=(sel>=0?'+':'')+fmtRp(Math.abs(sel));eS.style.color=sel<0?'var(--red)':sel>0?'var(--green)':'inherit';eS.style.fontWeight='700';}
+  const eJ=document.getElementById('vv-jml');if(eJ)eJ.textContent=jml+' komponen';
 }
-
 function closeModal(id){document.getElementById(id)?.classList.remove('open');}
 
 function renderDaftar(){
-  const b=document.getElementById('daf-bulan')?.value;
-  const t=document.getElementById('daf-tahun')?.value;
-  const s=document.getElementById('daf-status')?.value;
+  const b=document.getElementById('daf-bulan')?.value,t=document.getElementById('daf-tahun')?.value,s=document.getElementById('daf-status')?.value;
   let data=[...allData];
-  if(b)data=data.filter(p=>p.bulan==b);
-  if(t)data=data.filter(p=>p.tahun==t);
-  if(s)data=data.filter(p=>p.status===s);
-  const tb=document.getElementById('daftar-body'); if(!tb) return;
-  if(!data.length){tb.innerHTML='<tr><td colspan="10" class="text-center" style="padding:24px;color:var(--text-muted)">Tidak ada data</td></tr>';return;}
+  if(b)data=data.filter(p=>p.bulan==b);if(t)data=data.filter(p=>p.tahun==t);if(s)data=data.filter(p=>p.status===s);
+  const tb=document.getElementById('daftar-body');if(!tb)return;
+  if(!data.length){tb.innerHTML='<tr><td colspan="10" class="text-center" style="padding:24px;color:var(--text3)">Tidak ada data</td></tr>';return;}
   tb.innerHTML=data.map((p,i)=>{
     const sel=p.nilai_disetujui!==null?p.nilai_disetujui-p.nilai_pengajuan:null;
-    return `<tr>
-      <td class="text-center" style="color:var(--text-muted);font-size:12px">${i+1}</td>
+    return`<tr>
+      <td class="text-center" style="color:var(--text3);font-size:12px">${i+1}</td>
       <td class="td-mono">${p.no}</td>
-      <td><span class="badge ${p.jenis==='Bus Listrik'?'badge-green':'badge-blue'}">${p.jenis}</span></td>
+      <td><span class="badge ${p.jenis==='Bus Listrik'?'badge-green':'badge-purple'}">${p.jenis}</span></td>
       <td>${namaBulan(p.bulan)} ${p.tahun}</td>
       <td style="font-size:12px">${p.pj||'–'}</td>
       <td class="td-mono text-right">${fmtRp(p.nilai_pengajuan)}</td>
       <td class="td-mono text-right">${p.nilai_disetujui!==null?fmtRp(p.nilai_disetujui):'–'}</td>
-      <td class="td-mono text-right" style="font-weight:700;color:${sel===null?'inherit':sel<0?'var(--danger)':'var(--success)'}">
+      <td class="td-mono text-right" style="font-weight:700;color:${sel===null?'inherit':sel<0?'var(--red)':'var(--green)'}">
         ${sel!==null?(sel>=0?'+':'')+fmtRp(Math.abs(sel)):'–'}</td>
-      <td>${badgeStatus(p.status)}</td>
+      <td>${badgeSt(p.status)}</td>
       <td style="display:flex;gap:4px">
         <button class="btn btn-primary btn-sm" onclick="openVerifModal('${p.id}')">👁</button>
         <button class="btn btn-danger btn-sm" onclick="hapus('${p.id}')">🗑</button>
@@ -831,52 +1101,53 @@ function renderDaftar(){
   }).join('');
 }
 
-// ===================== LAPORAN =====================
+// ====== LAPORAN ======
 const BLN=['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 function namaBulan(n){return BLN[n]||'–';}
-function filterData(bArr,t){return allData.filter(p=>bArr.includes(p.bulan)&&p.tahun==t);}
+function filterD(bArr,t){return allData.filter(p=>bArr.includes(p.bulan)&&p.tahun==t);}
 
 function buildLapTable(data,title){
-  if(!data.length) return `<div class="card"><div class="card-body text-center" style="padding:40px;color:var(--text-muted)">📂 Tidak ada data pada periode ini</div></div>`;
+  if(!data.length)return`<div class="gcard"><div class="gcard-body text-center" style="padding:40px;color:var(--text3)">📂 Tidak ada data pada periode ini</div></div>`;
   const totP=data.reduce((s,p)=>s+p.nilai_pengajuan,0);
   const vData=data.filter(p=>p.nilai_disetujui!==null);
   const totD=vData.reduce((s,p)=>s+p.nilai_disetujui,0);
   const allSel=data.flatMap(p=>(p.selisih_detail||[]).map(s=>({...s,no:p.no,periode:namaBulan(p.bulan)+' '+p.tahun})));
-  let html=`<div class="card">
-    <div class="card-header" style="background:var(--primary);border-radius:var(--radius) var(--radius) 0 0"><span style="color:#fff">📋</span><div class="card-title" style="color:#fff">${title}</div></div>
+  let html=`<div class="gcard mb-12">
+    <div class="gcard-header" style="background:linear-gradient(135deg,var(--purple),var(--blue))">
+      <span style="color:#fff">📋</span><div class="gcard-title" style="color:#fff">${title}</div>
+    </div>
     <div style="overflow-x:auto"><table>
-      <thead><tr><th>No Pengajuan</th><th>Jenis Bus</th><th>Periode</th><th>PJ</th><th>Tgl Verif</th><th>Nilai Diajukan</th><th>Nilai Disetujui</th><th>Selisih</th><th>Komp.</th><th>Status</th></tr></thead>
+      <thead><tr><th>No Pengajuan</th><th>Jenis</th><th>Periode</th><th>PJ</th><th>Tgl Verif</th><th>Nilai Diajukan</th><th>Nilai Disetujui</th><th>Selisih</th><th>Komp.</th><th>Status</th></tr></thead>
       <tbody>${data.map(p=>{
         const sel=p.nilai_disetujui!==null?p.nilai_disetujui-p.nilai_pengajuan:null;
         const jS=(p.selisih_detail||[]).length;
-        return `<tr>
+        return`<tr>
           <td class="td-mono">${p.no}</td>
-          <td><span class="badge ${p.jenis==='Bus Listrik'?'badge-green':'badge-blue'}">${p.jenis}</span></td>
+          <td><span class="badge ${p.jenis==='Bus Listrik'?'badge-green':'badge-purple'}">${p.jenis}</span></td>
           <td>${namaBulan(p.bulan)} ${p.tahun}</td>
           <td style="font-size:12px">${p.pj||'–'}</td>
           <td style="font-size:12px">${p.tgl_verif||'–'}</td>
           <td class="td-mono text-right">${fmtRp(p.nilai_pengajuan)}</td>
           <td class="td-mono text-right">${p.nilai_disetujui!==null?fmtRp(p.nilai_disetujui):'–'}</td>
-          <td class="td-mono text-right" style="font-weight:700;color:${sel===null?'inherit':sel<0?'var(--danger)':'var(--success)'}">
+          <td class="td-mono text-right" style="font-weight:700;color:${sel===null?'inherit':sel<0?'var(--red)':'var(--green)'}">
             ${sel!==null?(sel>=0?'+':'')+fmtRp(Math.abs(sel)):'–'}</td>
           <td class="text-center">${jS?`<span class="badge badge-orange">${jS}</span>`:'–'}</td>
-          <td>${badgeStatus(p.status)}</td>
+          <td>${badgeSt(p.status)}</td>
         </tr>`;
       }).join('')}</tbody>
-      <tfoot><tr style="background:var(--surface2);font-weight:700">
-        <td colspan="5" style="padding:10px 12px">TOTAL (${data.length} pengajuan)</td>
+      <tfoot><tr style="font-weight:700;background:rgba(124,111,247,0.05)">
+        <td colspan="5" style="padding:10px 14px">TOTAL (${data.length} pengajuan)</td>
         <td class="td-mono text-right">${fmtRp(totP)}</td>
         <td class="td-mono text-right">${vData.length?fmtRp(totD):'–'}</td>
-        <td class="td-mono text-right" style="color:${(totD-totP)<0?'var(--danger)':'var(--success)'}">
+        <td class="td-mono text-right" style="color:${(totD-totP)<0?'var(--red)':'var(--green)'}">
           ${vData.length?(totD-totP>=0?'+':'')+fmtRp(Math.abs(totD-totP)):'–'}</td>
         <td></td><td></td>
       </tr></tfoot>
-    </table></div>
-  </div>`;
+    </table></div></div>`;
   if(allSel.length){
-    html+=`<div class="card">
-      <div class="card-header" style="background:#fff3e8;border-top:3px solid var(--accent)">
-        <span>⚠️</span><div class="card-title" style="color:var(--accent)">Rincian Selisih Komponen (${allSel.length} item)</div>
+    html+=`<div class="gcard">
+      <div class="gcard-header" style="background:rgba(249,115,22,0.08);border-top:3px solid var(--accent)">
+        <span>⚠️</span><div class="gcard-title" style="color:var(--accent)">Rincian Selisih Komponen (${allSel.length} item)</div>
       </div>
       <div style="overflow-x:auto"><table>
         <thead><tr><th>No Pengajuan</th><th>Periode</th><th>Komponen</th><th>Satuan</th><th>Nilai Diajukan</th><th>Nilai Disetujui</th><th>Selisih</th><th>Keterangan Selisih</th></tr></thead>
@@ -886,55 +1157,65 @@ function buildLapTable(data,title){
           <td><span class="badge badge-gray">${s.satuan||'–'}</span></td>
           <td class="td-mono text-right">${fmtRp(s.nilaiDiajukan)}</td>
           <td class="td-mono text-right">${fmtRp(s.nilaiDisetujui)}</td>
-          <td class="td-mono text-right" style="font-weight:700;color:${s.selisih<0?'var(--danger)':'var(--success)'}">
+          <td class="td-mono text-right" style="font-weight:700;color:${s.selisih<0?'var(--red)':'var(--green)'}">
             ${s.selisih>=0?'+':''} ${fmtRp(Math.abs(s.selisih))}</td>
-          <td style="font-size:12px;color:var(--text-secondary);font-style:${s.keterangan?'normal':'italic'}">${s.keterangan||'–'}</td>
+          <td style="font-size:12px;color:var(--text2);font-style:${s.keterangan?'normal':'italic'}">${s.keterangan||'–'}</td>
         </tr>`).join('')}</tbody>
-      </table></div>
-    </div>`;
+      </table></div></div>`;
   }
   return html;
 }
 
-function renderLapBulanan(){const b=parseInt(document.getElementById('lb-bulan')?.value||new Date().getMonth()+1);const t=document.getElementById('lb-tahun')?.value||2025;document.getElementById('lap-bulanan-content').innerHTML=buildLapTable(filterData([b],t),`Laporan Bulanan – ${namaBulan(b)} ${t}`);}
-function renderLapTriwulan(){const q=parseInt(document.getElementById('ltw-q')?.value||1);const t=document.getElementById('ltw-tahun')?.value||2025;const bm={1:[1,2,3],2:[4,5,6],3:[7,8,9],4:[10,11,12]};const lb=['Jan–Mar','Apr–Jun','Jul–Sep','Okt–Des'][q-1];document.getElementById('lap-triwulan-content').innerHTML=buildLapTable(filterData(bm[q],t),`Laporan Triwulan ${q} (${lb}) ${t}`);}
-function renderLapSemester(){const s=parseInt(document.getElementById('ls-sem')?.value||1);const t=document.getElementById('ls-tahun')?.value||2025;document.getElementById('lap-semester-content').innerHTML=buildLapTable(filterData(s===1?[1,2,3,4,5,6]:[7,8,9,10,11,12],t),`Laporan Semester ${s} (${s===1?'Januari–Juni':'Juli–Desember'}) ${t}`);}
-function renderLapTahunan(){const t=document.getElementById('lta-tahun')?.value||2025;document.getElementById('lap-tahunan-content').innerHTML=buildLapTable(filterData([1,2,3,4,5,6,7,8,9,10,11,12],t),`Laporan Tahunan ${t}`);}
+function renderLapBulanan(){const b=parseInt(document.getElementById('lb-bulan')?.value||new Date().getMonth()+1);const t=document.getElementById('lb-tahun')?.value||2025;document.getElementById('lap-bulanan-content').innerHTML=buildLapTable(filterD([b],t),`Laporan Bulanan – ${namaBulan(b)} ${t}`);}
+function renderLapTriwulan(){const q=parseInt(document.getElementById('ltw-q')?.value||1);const t=document.getElementById('ltw-tahun')?.value||2025;const bm={1:[1,2,3],2:[4,5,6],3:[7,8,9],4:[10,11,12]};const lb=['Jan–Mar','Apr–Jun','Jul–Sep','Okt–Des'][q-1];document.getElementById('lap-triwulan-content').innerHTML=buildLapTable(filterD(bm[q],t),`Laporan Triwulan ${q} (${lb}) ${t}`);}
+function renderLapSemester(){const s=parseInt(document.getElementById('ls-sem')?.value||1);const t=document.getElementById('ls-tahun')?.value||2025;document.getElementById('lap-semester-content').innerHTML=buildLapTable(filterD(s===1?[1,2,3,4,5,6]:[7,8,9,10,11,12],t),`Laporan Semester ${s} (${s===1?'Januari–Juni':'Juli–Desember'}) ${t}`);}
+function renderLapTahunan(){const t=document.getElementById('lta-tahun')?.value||2025;document.getElementById('lap-tahunan-content').innerHTML=buildLapTable(filterD([1,2,3,4,5,6,7,8,9,10,11,12],t),`Laporan Tahunan ${t}`);}
 
-// ===================== STATS & DASHBOARD =====================
+// ====== STATS ======
 function updateStats(){
   document.getElementById('stat-total').textContent=allData.length;
   document.getElementById('stat-pending').textContent=allData.filter(p=>p.status==='Menunggu').length;
   document.getElementById('stat-verified').textContent=allData.filter(p=>p.status==='Terverifikasi').length;
   document.getElementById('stat-revisi').textContent=allData.filter(p=>p.status==='Revisi').length;
-  const tb=document.getElementById('dash-recent-body');
-  const rc=[...allData].slice(0,6);
-  if(tb){
-    if(!rc.length){tb.innerHTML='<tr><td colspan="4" class="text-center" style="padding:24px;color:var(--text-muted)">Belum ada data</td></tr>';}
-    else{tb.innerHTML=rc.map(p=>`<tr><td class="td-mono" style="font-size:11px">${p.no}</td><td style="font-size:12px">${namaBulan(p.bulan)} ${p.tahun}</td><td>${badgeStatus(p.status)}</td><td class="td-mono text-right" style="font-size:12px">${fmtRp(p.nilai_pengajuan)}</td></tr>`).join('');}
-  }
+  const tb=document.getElementById('dash-recent-body'),rc=[...allData].slice(0,6);
+  if(tb){if(!rc.length){tb.innerHTML='<tr><td colspan="4" class="text-center" style="padding:24px;color:var(--text3)">Belum ada data</td></tr>';}
+    else tb.innerHTML=rc.map(p=>`<tr><td class="td-mono" style="font-size:11px">${p.no}</td><td style="font-size:12px">${namaBulan(p.bulan)} ${p.tahun}</td><td>${badgeSt(p.status)}</td><td class="td-mono text-right">${fmtRp(p.nilai_pengajuan)}</td></tr>`).join('');}
   const ce=document.getElementById('dash-chart');
   if(ce&&allData.length){
     const bm={};allData.forEach(p=>{const k=`${p.tahun}-${String(p.bulan).padStart(2,'0')}`;bm[k]=(bm[k]||0)+p.nilai_pengajuan;});
     const keys=Object.keys(bm).sort().slice(-8);const mx=Math.max(...keys.map(k=>bm[k]),1);
-    ce.style.cssText='display:flex;flex-direction:column;gap:8px;padding:16px;align-items:stretch;min-height:180px';
-    ce.innerHTML=`<div style="font-size:11px;font-weight:700;color:var(--text-muted)">Nilai Pengajuan (juta Rp)</div><div style="display:flex;align-items:flex-end;gap:8px;height:140px">`+
-    keys.map(k=>{const[,mo]=k.split('-');const h=Math.max(4,Math.round((bm[k]/mx)*130));
-    return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1">
-      <div style="font-size:9px;color:var(--text-secondary);font-family:'DM Mono',monospace">${(bm[k]/1e6).toFixed(1)}</div>
-      <div style="width:100%;height:${h}px;background:var(--primary);border-radius:4px 4px 0 0;opacity:.85"></div>
-      <div style="font-size:10px;color:var(--text-muted);font-weight:600">${namaBulan(parseInt(mo)).slice(0,3)}</div>
-    </div>`;}).join('')+'</div>';
-  } else if(ce){ce.innerHTML='<div style="text-align:center;color:var(--text-muted);padding:40px">📊 Belum ada data</div>';}
+    ce.innerHTML=keys.map(k=>{const[,mo]=k.split('-');const h=Math.max(4,Math.round((bm[k]/mx)*140));
+    return`<div class="chart-bar-col">
+      <div class="chart-bar-val">${(bm[k]/1e6).toFixed(1)}M</div>
+      <div class="chart-bar" style="height:${h}px"></div>
+      <div class="chart-bar-label">${namaBulan(parseInt(mo)).slice(0,3)}</div>
+    </div>`;}).join('');
+  } else if(ce) ce.innerHTML='<div style="text-align:center;width:100%;color:var(--text3);font-size:13px;padding:20px">Belum ada data</div>';
 }
-function badgeStatus(s){return({'Menunggu':'<span class="badge badge-orange"><span class="status-dot dot-orange"></span>Menunggu</span>','Terverifikasi':'<span class="badge badge-green"><span class="status-dot dot-green"></span>Terverifikasi</span>','Revisi':'<span class="badge badge-red"><span class="status-dot dot-red"></span>Revisi</span>'}[s])||`<span class="badge badge-gray">${s}</span>`;}
 
-// ===================== NAV =====================
+function badgeSt(s){return({'Menunggu':'<span class="badge badge-orange"><span class="status-dot dot-orange" style="margin-right:4px"></span>Menunggu</span>','Terverifikasi':'<span class="badge badge-green"><span class="status-dot dot-green" style="margin-right:4px"></span>Terverifikasi</span>','Revisi':'<span class="badge badge-red"><span class="status-dot" style="background:var(--red);margin-right:4px"></span>Revisi</span>'}[s])||`<span class="badge badge-gray">${s}</span>`;}
+
+// ====== PAGE TITLES ======
+const PAGE_META={
+  'dashboard':['Selamat Datang 👋','Sistem Verifikasi Subsidi TransJogja – PT AMI'],
+  'input-pengajuan':['Input Pengajuan 📝','Ajukan verifikasi subsidi untuk periode tertentu'],
+  'hasil-verifikasi':['Hasil Verifikasi ✅','Verifikasi komponen pengajuan subsidi'],
+  'daftar-pengajuan':['Daftar Pengajuan 📋','Semua pengajuan verifikasi subsidi'],
+  'laporan-bulanan':['Laporan Bulanan 📅','Ringkasan verifikasi per bulan'],
+  'laporan-triwulan':['Laporan Triwulan 📆','Rekapitulasi per triwulan'],
+  'laporan-semester':['Laporan Semester 🗓️','Rekapitulasi per semester'],
+  'laporan-tahunan':['Laporan Tahunan 📁','Rekapitulasi satu tahun penuh'],
+};
+
+// ====== NAV ======
 function showPage(id){
-  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
-  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
-  const pg=document.getElementById('page-'+id);if(pg)pg.style.display='block';
-  document.querySelectorAll('.nav-item').forEach(n=>{if(n.getAttribute('onclick')?.includes(id))n.classList.add('active');});
+  document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
+  document.querySelectorAll('.nav-btn').forEach(n=>n.classList.remove('active'));
+  const pg=document.getElementById('page-'+id);if(pg){pg.classList.add('active');pg.style.display='block';}
+  const nb=document.getElementById('nav-'+id);if(nb)nb.classList.add('active');
+  const meta=PAGE_META[id]||['SIMVERI',''];
+  const tt=document.getElementById('topbar-title'),ts=document.getElementById('topbar-sub');
+  if(tt)tt.textContent=meta[0];if(ts)ts.textContent=meta[1];
   if(id==='dashboard')updateStats();
   if(id==='hasil-verifikasi')renderVfList();
   if(id==='daftar-pengajuan')renderDaftar();
@@ -944,10 +1225,9 @@ function showPage(id){
   if(id==='laporan-tahunan')renderLapTahunan();
 }
 
-// ===================== INIT =====================
-document.addEventListener('DOMContentLoaded', async()=>{
+// ====== INIT ======
+document.addEventListener('DOMContentLoaded',async()=>{
   const now=new Date();
-  document.getElementById('hdr-date').textContent=now.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   const tg=document.getElementById('f-tgl');if(tg)tg.value=now.toISOString().split('T')[0];
   const lb=document.getElementById('lb-bulan');if(lb)lb.value=now.getMonth()+1;
   ['inv','ops','monitor','pramudi','fasilitas','asuransi'].forEach(g=>renderCompRows('comp-'+g,g));
@@ -956,17 +1236,17 @@ document.addEventListener('DOMContentLoaded', async()=>{
   renderCompRows('comp-tiket','tiket');
   renderCompRows('comp-pendapatan-lain','pendapatan_lain');
 
-  // Test koneksi & load data
-  const connEl=document.getElementById('conn-status');
+  const dot=document.getElementById('conn-dot'),txt=document.getElementById('conn-text');
   try{
     allData=await fetchAll();
-    connEl.className='conn-badge ok'; connEl.textContent='● Terhubung ke Supabase';
+    dot.className='conn-dot ok';txt.textContent='Terhubung';txt.style.color='var(--green)';
     updateStats();
-  } catch(e){
-    connEl.className='conn-badge err'; connEl.textContent='● Koneksi gagal';
-    toast('Gagal terhubung ke Supabase. Periksa koneksi internet.','error');
+  }catch(e){
+    dot.className='conn-dot err';txt.textContent='Gagal terhubung';txt.style.color='var(--red)';
+    toast('Gagal terhubung ke Supabase','error');
   }
-  showLoading(false);
+  document.getElementById('app-loading').style.display='none';
+  showPage('dashboard');
 });
 </script>
 </body>
