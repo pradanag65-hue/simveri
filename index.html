@@ -282,6 +282,14 @@ tbody tr:hover{background:rgba(255,255,255,.46)}
           <div class="fgr"><label class="fl">Tanggal Pengajuan</label><input type="date" class="fc" id="f-tgl"></div>
           <div class="fgr"><label class="fl">Penanggung Jawab</label><input type="text" class="fc" id="f-pj" placeholder="Nama PJ"></div>
         </div>
+        <div class="fg g2" style="margin-top:12px">
+          <div class="fgr"><label class="fl">Biaya Pokok PT AMI (A+B) — diisi otomatis dari komponen</label><input class="fc" id="f-info-ami" readonly style="opacity:.6;font-family:'DM Mono',monospace" placeholder="Dari komponen A & B"></div>
+          <div class="fgr"><label class="fl">Biaya Pokok PT JTT (dari operator lain)</label><input type="number" class="fc" id="f-bp-jtt" placeholder="0" oninput="updateSummary()"></div>
+        </div>
+        <div class="fg g2" style="margin-top:8px">
+          <div class="fgr"><label class="fl">Keuntungan PT JTT (7% — auto dari BP JTT)</label><input class="fc" id="f-ku-jtt" readonly style="opacity:.6;font-family:'DM Mono',monospace" placeholder="Auto 7%"></div>
+          <div class="fgr"><label class="fl">Pramugara PT JTT (masuk Biaya Pendukung)</label><input type="number" class="fc" id="f-pramugara-jtt" placeholder="0" oninput="updateSummary()"></div>
+        </div>
         <div class="fgr" style="margin-top:12px"><label class="fl">Catatan Umum</label><textarea class="fc" id="f-catatan" rows="2" placeholder="Keterangan umum jika ada..."></textarea></div>
       </div>
     </div>
@@ -709,8 +717,14 @@ function getGrpTot(g){
   },0);
 }
 function updateSummary(){
-  const bp=BG.reduce((s,g)=>s+getGrpTot(g),0);
-  const ku=bp*.07, pd=PG.reduce((s,g)=>s+getGrpTot(g),0), pp=PPG.reduce((s,g)=>s+getGrpTot(g),0);
+  const bpAMI=BG.reduce((s,g)=>s+getGrpTot(g),0);
+  const bpJTT=parseFloat(document.getElementById('f-bp-jtt')?.value||0);
+  const bp=bpAMI+bpJTT;
+  const kuAMI=bpAMI*0.07, kuJTT=bpJTT*0.07, ku=kuAMI+kuJTT;
+  const pdBase=PG.reduce((s,g)=>s+getGrpTot(g),0);
+  const pramugaraJTT=parseFloat(document.getElementById('f-pramugara-jtt')?.value||0);
+  const pd=pdBase+pramugaraJTT;
+  const pp=PPG.reduce((s,g)=>s+getGrpTot(g),0);
   setText('sum-bp',fmtRp(bp));setText('sum-ku',fmtRp(ku));
   setText('sum-pd',fmtRp(pd));setText('sum-pp',fmtRp(pp));
   setText('sum-sub',fmtRp(bp+ku+pd-pp));
@@ -719,6 +733,9 @@ function updateSummary(){
   const bB=['pegawai','kelola'].reduce((s,g)=>s+getGrpTot(g),0);
   setText('lbl-a',fmtRp(bA));setText('lbl-b',fmtRp(bB));
   setText('lbl-c',fmtRp(pd));setText('lbl-d',fmtRp(pp));
+  // update readonly fields
+  const eAMI=document.getElementById('f-info-ami');if(eAMI)eAMI.value=fmtRp(bpAMI);
+  const eKuJTT=document.getElementById('f-ku-jtt');if(eKuJTT)eKuJTT.value=fmtRp(kuJTT);
 }
 function setText(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
 
@@ -752,9 +769,13 @@ async function savePengajuan(){
   if(!jenis||!bulan){toast('Jenis bus dan periode bulan wajib diisi!','error');return;}
   const btn=document.getElementById('btn-save');btn.disabled=true;btn.textContent='⏳ Menyimpan...';
   const kd=collectForm();
-  const bp=BG.reduce((s,g)=>s+Object.values(kd[g]).reduce((a,v)=>a+v.total,0),0);
-  const ku=bp*.07;
-  const pd=PG.reduce((s,g)=>s+Object.values(kd[g]).reduce((a,v)=>a+v.total,0),0);
+  const bpAMI=BG.reduce((s,g)=>s+Object.values(kd[g]).reduce((a,v)=>a+v.total,0),0);
+  const bpJTT=parseFloat(document.getElementById('f-bp-jtt')?.value||0);
+  const bp=bpAMI+bpJTT;
+  const ku=(bpAMI*0.07)+(bpJTT*0.07);
+  const pdBase=PG.reduce((s,g)=>s+Object.values(kd[g]).reduce((a,v)=>a+v.total,0),0);
+  const pramugaraJTT=parseFloat(document.getElementById('f-pramugara-jtt')?.value||0);
+  const pd=pdBase+pramugaraJTT;
   const pp=PPG.reduce((s,g)=>s+Object.values(kd[g]).reduce((a,v)=>a+v.total,0),0);
   const payload={
     id:Date.now().toString(), no:genNo(bulan,tahun),
@@ -762,7 +783,10 @@ async function savePengajuan(){
     tgl:document.getElementById('f-tgl').value,
     pj:document.getElementById('f-pj').value,
     catatan:document.getElementById('f-catatan').value,
-    komp_data:kd, biaya_pokok:bp, keuntungan:ku, pendukung:pd, pendapatan:pp,
+    komp_data:kd,
+    biaya_pokok_ami:bpAMI, biaya_pokok_jtt:bpJTT,
+    pramugara_jtt:pramugaraJTT,
+    biaya_pokok:bp, keuntungan:ku, pendukung:pd, pendapatan:pp,
     nilai_pengajuan:bp+ku+pd-pp,
     status:'Menunggu', nilai_disetujui:null, verif_detail:{}, selisih_detail:[],
     catatan_verif:'', tgl_verif:null
@@ -778,6 +802,8 @@ async function savePengajuan(){
 function resetForm(){
   ['f-jenis','f-bulan'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   ['f-catatan','f-pj'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['f-bp-jtt','f-pramugara-jtt'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['f-info-ami','f-ku-jtt'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   initDS();
   const groupMap={
     'comp-inv':'inv','comp-ops':'ops','comp-monitor':'monitor','comp-pramudi':'pramudi',
@@ -798,137 +824,255 @@ function previewSurat(){
   const tahun=document.getElementById('f-tahun').value||'2026';
   const tgl=document.getElementById('f-tgl').value||new Date().toISOString().split('T')[0];
   const kd=collectForm();
-  const bp=BG.reduce((s,g)=>s+Object.values(kd[g]).reduce((a,v)=>a+v.total,0),0);
-  const ku=bp*.07, pd=PG.reduce((s,g)=>s+Object.values(kd[g]).reduce((a,v)=>a+v.total,0),0);
+  const bpAMI=BG.reduce((s,g)=>s+Object.values(kd[g]).reduce((a,v)=>a+v.total,0),0);
+  const bpJTT=parseFloat(document.getElementById('f-bp-jtt')?.value||0);
+  const kuAMI=bpAMI*0.07, kuJTT=bpJTT*0.07;
+  const pdBase=PG.reduce((s,g)=>s+Object.values(kd[g]).reduce((a,v)=>a+v.total,0),0);
+  const pramugaraJTT=parseFloat(document.getElementById('f-pramugara-jtt')?.value||0);
+  const pd=pdBase+pramugaraJTT;
   const pp=PPG.reduce((s,g)=>s+Object.values(kd[g]).reduce((a,v)=>a+v.total,0),0);
-  buildSuratModal({jenis,bulan,tahun,tgl,kd,bp,ku,pd,pp,subsidi:bp+ku+pd-pp,no:genNo(bulan,tahun)});
+  const bp=bpAMI+bpJTT, ku=kuAMI+kuJTT;
+  buildSuratModal({jenis,bulan,tahun,tgl,kd,bpAMI,bpJTT,bp,ku,pd,pp,pramugaraJTT,subsidi:bp+ku+pd-pp,no:genNo(bulan,tahun)});
 }
 function suratFromRecord(id){
   const p=allData.find(x=>x.id===id);if(!p)return;
-  buildSuratModal({jenis:p.jenis,bulan:p.bulan,tahun:p.tahun,tgl:p.tgl||'',kd:p.komp_data||{},bp:p.biaya_pokok,ku:p.keuntungan,pd:p.pendukung,pp:p.pendapatan,subsidi:p.nilai_pengajuan,no:p.no});
+  buildSuratModal({
+    jenis:p.jenis,bulan:p.bulan,tahun:p.tahun,tgl:p.tgl||'',
+    kd:p.komp_data||{},
+    bpAMI:p.biaya_pokok_ami||p.biaya_pokok||0,
+    bpJTT:p.biaya_pokok_jtt||0,
+    bp:p.biaya_pokok,ku:p.keuntungan,pd:p.pendukung,pp:p.pendapatan,
+    pramugaraJTT:p.pramugara_jtt||0,
+    subsidi:p.nilai_pengajuan,no:p.no
+  });
 }
 function buildSuratModal(d){
-  const biayaOps=d.bp+d.ku+d.pd;
+  const bpAMI=d.bpAMI||d.bp||0;
+  const bpJTT=d.bpJTT||0;
+  const kuAMI=bpAMI*0.07;
+  const kuJTT=bpJTT*0.07;
+  const bpTotal=bpAMI+bpJTT;
+  const kuTotal=kuAMI+kuJTT;
+  const biayaOps=bpTotal+kuTotal+d.pd;
   const noSurat=`04.07.002/AMI/D.1/SUM/${d.tahun}`;
   const tglStr=fmtTgl(d.tgl);
+  const S=`font-family:'Times New Roman',Times,serif`;
+
   document.getElementById('modal-surat-body').innerHTML=`
-  <div id="surat-print-content" class="pdf-wrap">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
-      <div><div style="font-size:26px;font-weight:900;letter-spacing:-1px">PT AMI</div><div style="font-size:10px;color:#666;margin-top:1px">PT Anindya Mitra Internasional</div></div>
-      <div style="font-size:10px;text-align:right;color:#444;line-height:1.5">Jl. Janti KM 4, Gedongkuning<br>Banguntapan, Yogyakarta<br>Telp: (0274)451034-35 | Fax: (0274)451036</div>
+  <div id="surat-print-content" style="${S};font-size:12pt;line-height:1.7;color:#000;background:#fff;padding:32px">
+
+    <!-- KOP SURAT -->
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:8px">
+      <div style="width:70px;height:70px;border:3px solid #1a3a6e;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <div style="${S};font-size:22px;font-weight:900;color:#1a3a6e;letter-spacing:-1px">AMI</div>
+      </div>
+      <div>
+        <div style="${S};font-size:18pt;font-weight:900;color:#1a3a6e;letter-spacing:-0.5px">PT AMI</div>
+        <div style="${S};font-size:10pt;color:#333">PT Anindya Mitra Internasional</div>
+      </div>
     </div>
-    <hr style="border:1px solid #222;margin-bottom:16px">
-    <table style="margin-bottom:16px;font-size:12px;border:none"><tr><td style="border:none;width:80px">Nomor</td><td style="border:none;width:10px">:</td><td style="border:none">${noSurat}</td></tr><tr><td style="border:none">Lamp</td><td style="border:none">:</td><td style="border:none">1 (satu) bendel</td></tr><tr><td style="border:none">Ha</td><td style="border:none">:</td><td style="border:none">Permohonan Pencairan Anggaran Belanja Subsidi Bulan ${namaBulan(d.bulan)} ${d.tahun}</td></tr></table>
-    <div style="margin-bottom:16px;font-size:12px">Kepada:<br>Yth. Kepala Dinas Perhubungan<br>Daerah Istimewa Yogyakarta<br>di Yogyakarta</div>
-    <p style="font-size:12px;margin-bottom:14px">Dengan hormat,</p>
-    <p style="font-size:12px;text-align:justify;text-indent:40px;margin-bottom:14px">Berdasarkan Peraturan Gubernur DIY Nomor 110 Tahun 2024 tentang Penyelenggaraan Sistem Angkutan Perkotaan Trans Jogja, kami mengajukan permohonan pencairan anggaran belanja subsidi bulan ${namaBulan(d.bulan)} ${d.tahun} sebesar <strong>${fmtRp(d.subsidi)}</strong> (<em>${terbilang(Math.round(d.subsidi))} Rupiah</em>) dengan perhitungan sebagai berikut:</p>
-    <table style="width:60%;margin:0 auto 18px;font-size:12px">
-      <tr><td style="border:1px solid #444;padding:5px 10px;width:24px;text-align:center">A.</td><td style="border:1px solid #444;padding:5px 10px">Biaya Operasional</td><td style="border:1px solid #444;padding:5px 10px;text-align:right;font-family:'Courier New'">${fmtRp(biayaOps)}</td></tr>
-      <tr><td style="border:1px solid #444;padding:5px 10px;text-align:center">B.</td><td style="border:1px solid #444;padding:5px 10px">Pendapatan Operasional</td><td style="border:1px solid #444;padding:5px 10px;text-align:right;font-family:'Courier New'">${fmtRp(d.pp)}</td></tr>
-      <tr><td style="border:1px solid #444;padding:5px 10px;text-align:center">C.</td><td style="border:1px solid #444;padding:5px 10px">Selisih Biaya dan Pendapatan Operasional</td><td style="border:1px solid #444;padding:5px 10px;text-align:right;font-family:'Courier New'"><strong>${fmtRp(d.subsidi)}</strong></td></tr>
+    <div style="border-bottom:3px solid #1a3a6e;margin-bottom:12px"></div>
+    <div style="${S};font-size:9pt;color:#444;margin-bottom:18px;display:flex;justify-content:space-between">
+      <span>sekretariat@anindya.co.id &nbsp;|&nbsp; (0274)451034-35 &nbsp;|&nbsp; 0882 2888 6287</span>
+      <span>ptanindya_ofc &nbsp;|&nbsp; ptanindya_official &nbsp;|&nbsp; anindya.co.id</span>
+    </div>
+
+    <!-- NOMOR SURAT -->
+    <table style="${S};font-size:11pt;margin-bottom:16px;border:none">
+      <tr><td style="border:none;width:60px">Nomor</td><td style="border:none;width:8px">:</td><td style="border:none">${noSurat}</td></tr>
+      <tr><td style="border:none">Lamp</td><td style="border:none">:</td><td style="border:none">1 (satu) bendel</td></tr>
+      <tr><td style="border:none">Ha</td><td style="border:none">:</td><td style="border:none">Permohonan Pencairan Anggaran Belanja Subsidi Bulan ${namaBulan(d.bulan)} ${d.tahun}</td></tr>
     </table>
-    <p style="font-size:12px;text-align:justify;margin-bottom:30px">Demikian permohonan ini kami sampaikan, atas perhatian dan terkabulnya permohonan ini, kami ucapkan terima kasih.</p>
-    <div style="display:flex;justify-content:flex-end;font-size:12px">
+
+    <!-- TUJUAN -->
+    <div style="${S};font-size:11pt;margin-bottom:16px">
+      Kepada:<br>
+      Yth. Kepala Dinas Perhubungan<br>
+      Daerah Istimewa Yogyakarta<br>
+      di Yogyakarta
+    </div>
+
+    <p style="${S};font-size:11pt;margin-bottom:14px">Dengan hormat,</p>
+    <p style="${S};font-size:11pt;text-align:justify;text-indent:40px;margin-bottom:14px">
+      Berdasarkan Peraturan Gubernur DIY Nomor 110 Tahun 2024 tentang Penyelenggaraan Sistem Angkutan Perkotaan Trans Jogja, kami mengajukan permohonan pencairan anggaran belanja subsidi bulan ${namaBulan(d.bulan)} ${d.tahun} sebesar <strong>Rp ${fmtNum(d.subsidi)}</strong> <em>( ${terbilang(Math.round(d.subsidi))} Rupiah )</em> dengan perhitungan sebagai berikut:
+    </p>
+
+    <!-- TABEL RINGKASAN -->
+    <table style="${S};width:70%;margin:0 auto 18px;border-collapse:collapse;font-size:11pt">
+      <tr><td style="border:1px solid #333;padding:5px 12px;width:32px">A.</td><td style="border:1px solid #333;padding:5px 12px">Biaya Operasional</td><td style="border:1px solid #333;padding:5px 12px;text-align:right">Rp ${fmtNum(biayaOps)}</td></tr>
+      <tr><td style="border:1px solid #333;padding:5px 12px">B.</td><td style="border:1px solid #333;padding:5px 12px">Pendapatan Operasional</td><td style="border:1px solid #333;padding:5px 12px;text-align:right">Rp ${fmtNum(d.pp)}</td></tr>
+      <tr><td style="border:1px solid #333;padding:5px 12px">C.</td><td style="border:1px solid #333;padding:5px 12px">Selisih Biaya dan Pendapatan Operasional</td><td style="border:1px solid #333;padding:5px 12px;text-align:right"><strong>Rp ${fmtNum(d.subsidi)}</strong></td></tr>
+    </table>
+
+    <p style="${S};font-size:11pt;text-align:justify;margin-bottom:36px">
+      Demikian permohonan ini kami sampaikan, atas perhatian dan terkabulnya permohonan ini, kami ucapkan terima kasih.
+    </p>
+
+    <!-- TANDA TANGAN -->
+    <div style="display:flex;justify-content:flex-end;${S};font-size:11pt">
       <div style="text-align:center;width:220px">
         <p>Yogyakarta, ${tglStr}</p>
         <p>PT Anindya Mitra Internasional,</p>
-        <div style="height:58px"></div>
-        <p style="font-weight:700">Priyatno Bambang Hernowo</p>
-        <p style="font-style:italic">Direktur Utama</p>
+        <div style="height:64px"></div>
+        <p style="font-weight:700;text-decoration:underline">Priyatno Bambang Hernowo</p>
+        <p><em>Direktur Utama</em></p>
       </div>
     </div>
-    <hr style="border:0.5px solid #ccc;margin:24px 0 10px">
-    <p style="font-size:10px;color:#666;margin-bottom:22px">Tembusan: 1. Badan Pengelola Keuangan dan Aset DIY;</p>
 
-    <div style="page-break-before:always;padding-top:20px">
-      <h3 style="text-align:center;font-size:14px;margin-bottom:3px">BIAYA DAN PENDAPATAN OPERASIONAL TRANS JOGJA</h3>
-      <h3 style="text-align:center;font-size:12px;font-weight:400;margin-bottom:18px">${namaBulan(d.bulan).toUpperCase()} TAHUN ${d.tahun}</h3>
-      ${buildRincianHTML(d)}
-      <p style="font-size:11px;margin-top:10px"><strong>Terbilang:</strong> ${terbilang(Math.round(d.subsidi))} Rupiah</p>
-      <div style="display:flex;justify-content:flex-end;font-size:11px;margin-top:22px">
-        <div style="text-align:center;width:200px">
-          <p>Yogyakarta, ${tglStr}</p><p>PT Anindya Mitra Internasional</p>
-          <div style="height:50px"></div>
-          <p style="font-weight:700">Priyatno Bambang Hernowo</p>
-          <p style="font-style:italic">Direktur Utama</p>
+    <div style="margin-top:24px;${S};font-size:10pt;color:#444">
+      Tembusan:<br>
+      1. Badan Pengelola Keuangan dan Aset DIY;
+    </div>
+
+    <!-- ══════ LAMPIRAN RINCIAN ══════ -->
+    <div style="page-break-before:always;padding-top:30px">
+      <div style="text-align:center;margin-bottom:20px">
+        <div style="${S};font-size:13pt;font-weight:700">BIAYA DAN PENDAPATAN OPERASIONAL TRANS JOGJA</div>
+        <div style="${S};font-size:11pt;font-weight:700;margin-top:4px">${namaBulan(d.bulan).toUpperCase()} TAHUN ${d.tahun}</div>
+      </div>
+
+      ${buildRincianHTML(d, bpAMI, bpJTT, kuAMI, kuJTT)}
+
+      <p style="${S};font-size:11pt;margin-top:12px">
+        <em>Terbilang: ${terbilang(Math.round(d.subsidi))} Rupiah</em>
+      </p>
+
+      <div style="display:flex;justify-content:flex-end;margin-top:28px;${S};font-size:11pt">
+        <div style="text-align:center;width:220px">
+          <p>Yogyakarta, ${tglStr}</p>
+          <p>PT Anindya Mitra Internasional</p>
+          <div style="height:56px"></div>
+          <p style="font-weight:700;text-decoration:underline">Priyatno Bambang Hernowo</p>
+          <p><em>Direktur Utama</em></p>
         </div>
       </div>
     </div>
+
   </div>`;
   document.getElementById('modal-surat').classList.add('open');
 }
 
-function buildRincianHTML(d){
-  const rows=[];
-  const addRow=(indent,label,val)=>rows.push(`<tr><td style="border:1px solid #888;padding:4px 8px;padding-left:${indent}px">${label}</td><td style="border:1px solid #888;padding:4px 8px;text-align:right;font-family:'Courier New';white-space:nowrap">${val===null?'Rp –':fmtRp(val)}</td></tr>`);
-  const addHd=(label,val=null)=>rows.push(`<tr style="background:#f0f0f0"><td style="border:1px solid #666;padding:5px 8px;font-weight:700">${label}</td><td style="border:1px solid #666;padding:5px 8px;text-align:right;font-family:'Courier New';font-weight:700">${val===null?'':fmtRp(val)}</td></tr>`);
+function buildRincianHTML(d, bpAMI, bpJTT, kuAMI, kuJTT){
+  const S=`font-family:'Times New Roman',Times,serif`;
+  const kuTotal=kuAMI+kuJTT;
+  const bpTotal=bpAMI+bpJTT;
 
-  addHd('A. BIAYA POKOK');
-  addHd('A.1 Biaya Pokok PT Anindya Mitra Internasional');
-  addHd('A.1.1 Biaya Langsung');
+  const cell=(txt,right=false,bold=false,pl=8,bg='',colspan=1)=>{
+    const cspan=colspan>1?`colspan="${colspan}"`:'';
+    return `<td ${cspan} style="${S};border:1px solid #666;padding:4px ${right?'8px':'8px'};padding-left:${pl}px;text-align:${right?'right':'left'};font-weight:${bold?'700':'400'};background:${bg||'transparent'};white-space:nowrap;font-size:10pt">${txt}</td>`;
+  };
+  const rpCell=(v,bold=false,bg='')=>{
+    const txt=v===null||v===undefined?'Rp -':`Rp ${fmtNum(v)}`;
+    return `<td style="${S};border:1px solid #666;padding:4px 8px;text-align:right;font-weight:${bold?'700':'400'};background:${bg||'transparent'};white-space:nowrap;font-size:10pt">${txt}</td>`;
+  };
+  const hd3=(txt)=>`<tr><td colspan="2" style="${S};border:1px solid #555;padding:5px 8px;font-weight:700;background:#e8e8e8;font-size:10pt">${txt}</td><td style="border:1px solid #555;background:#e8e8e8"></td></tr>`;
+  const hd4=(txt)=>`<tr><td colspan="2" style="${S};border:1px solid #666;padding:4px 16px;font-weight:700;font-style:italic;background:#f4f4f4;font-size:10pt">${txt}</td><td style="border:1px solid #666;background:#f4f4f4"></td></tr>`;
+  const subhd=(txt)=>`<tr><td colspan="3" style="${S};border:1px solid #888;padding:3px 24px;font-weight:600;font-size:9.5pt;background:#fafafa">${txt}</td></tr>`;
+  const dataRow=(label,val,pl=32)=>`<tr>${cell(label,false,false,pl)}${rpCell(val||null)}</tr>`;
 
-  const directGroups=[
-    {g:'inv',label:'1. Biaya Investasi dan Administrasi Kendaraan'},
-    {g:'ops',label:'2. Biaya Operasional dan Pemeliharaan'},
-    {g:'monitor',label:'3. Biaya Investasi Sistem Monitoring Keselamatan'},
-    {g:'pramudi',label:'4. Biaya Awak Kendaraan Pramudi'},
-    {g:'fasilitas',label:'5. Biaya Peningkatan Fasilitas Armada'},
-    {g:'asuransi',label:'6. Biaya Asuransi Penumpang'},
+  let rows=[];
+  rows.push(`<tr>${cell('A',false,true,8,'#dde0f5')}${cell('Biaya Operasional',false,true,8,'#dde0f5')}${rpCell(bpTotal+kuTotal+d.pd,true,'#dde0f5')}</tr>`);
+
+  // ── A.1 PT AMI ──
+  rows.push(hd3('A 1.1  Biaya Pokok PT Anindya Mitra Internasional'));
+  rows.push(hd4('A.1.1.1  Biaya Langsung'));
+
+  const directGrps=[
+    {g:'inv',label:'1.  Biaya Investasi dan Administrasi'},
+    {g:'ops',label:'2.  Biaya Operasional dan Pemeliharaan'},
+    {g:'monitor',label:'3.  Biaya Investasi Sistem Monitoring Keselamatan\n        Keamanan dan Perilaku Penumpang'},
+    {g:'pramudi',label:'4.  Biaya Awak Kendaraan Pramudi'},
+    {g:'fasilitas',label:'5.  Biaya Peningkatan Fasilitas Armada'},
+    {g:'asuransi',label:'6.  Biaya Asuransi Penumpang'},
   ];
-  directGroups.forEach(({g,label})=>{
+  directGrps.forEach(({g,label})=>{
     if(!d.kd[g]) return;
-    rows.push(`<tr style="background:#fafafa"><td colspan="2" style="border:1px solid #aaa;padding:4px 8px;font-weight:600;font-size:11px;padding-left:16px">${label}</td></tr>`);
-    Object.keys(d.kd[g]).forEach(key=>{
-      const item=d.kd[g][key];
-      addRow(24, item.label, item.total||null);
-      // sub detail rows
+    rows.push(subhd(label));
+    Object.keys(d.kd[g]).forEach(k=>{
+      const item=d.kd[g][k];
+      const tot=item.total||null;
+      rows.push(dataRow(item.label, tot, 40));
+      // sub-detail dari input
       if(item.details&&item.details.length){
         item.details.forEach((r,i)=>{
-          const tot=(parseFloat(r.qty)||0)*(parseFloat(r.hs)||0);
-          rows.push(`<tr style="font-size:10px;color:#555"><td style="border:1px solid #ddd;padding:3px 8px;padding-left:36px">${i+1}. ${r.ket||'–'} (${fmtNum(r.qty)} ${r.sat} × ${fmtRp(r.hs)})</td><td style="border:1px solid #ddd;padding:3px 8px;text-align:right;font-family:'Courier New'">${fmtRp(tot)}</td></tr>`);
+          const dt=(parseFloat(r.qty)||0)*(parseFloat(r.hs)||0);
+          rows.push(`<tr><td style="${S};border:1px solid #ccc;padding:2px 8px;padding-left:52px;font-size:9pt;color:#555">${i+1}. ${r.ket||'–'} &nbsp;(${fmtNum(r.qty)} ${r.sat} × Rp ${fmtNum(r.hs)})</td>${rpCell(dt>0?dt:null)}</tr>`);
         });
       }
     });
   });
 
-  addHd('A.1.2 Biaya Tidak Langsung');
-  [{g:'pegawai',label:'1. Biaya Pegawai Kantor, Pool dan Bengkel'},{g:'kelola',label:'2. Biaya Pengelolaan'}].forEach(({g,label})=>{
-    if(!d.kd[g]) return;
-    rows.push(`<tr style="background:#fafafa"><td colspan="2" style="border:1px solid #aaa;padding:4px 8px;font-weight:600;font-size:11px;padding-left:16px">${label}</td></tr>`);
-    Object.keys(d.kd[g]).forEach(key=>{
-      const item=d.kd[g][key];
-      addRow(24, item.label, item.total||null);
+  rows.push(hd4('A.1.1.2  Biaya Tidak Langsung'));
+  [{g:'pegawai',label:'1.  Biaya Pegawai Kantor, Pool dan Bengkel'},{g:'kelola',label:'2.  Biaya Pengelolaan'}].forEach(({g,label})=>{
+    if(!d.kd[g])return;
+    rows.push(subhd(label));
+    Object.keys(d.kd[g]).forEach(k=>{
+      const item=d.kd[g][k];
+      rows.push(dataRow(item.label, item.total||null, 40));
     });
   });
 
-  rows.push(`<tr style="background:#dde0f5;font-weight:700"><td style="border:1px solid #555;padding:6px 8px">I. Jumlah Biaya Pokok PT Anindya Mitra Internasional</td><td style="border:1px solid #555;padding:6px 8px;text-align:right;font-family:'Courier New'">${fmtRp(d.bp)}</td></tr>`);
-  rows.push(`<tr style="background:#dde0f5;font-weight:700"><td style="border:1px solid #555;padding:5px 8px">II. Bagian Keuntungan PT. AMI (7% × I.)</td><td style="border:1px solid #555;padding:5px 8px;text-align:right;font-family:'Courier New'">${fmtRp(d.ku)}</td></tr>`);
-  rows.push(`<tr style="background:#ccd0ef;font-weight:700"><td style="border:1px solid #444;padding:5px 8px">III. Jumlah Biaya Pokok + Keuntungan (I + II)</td><td style="border:1px solid #444;padding:5px 8px;text-align:right;font-family:'Courier New'">${fmtRp(d.bp+d.ku)}</td></tr>`);
+  rows.push(`<tr>${cell('I.',false,true,8,'#e0e4f4')}${cell('Jumlah Biaya Pokok PT Anindya Mitra Internasional',false,true,8,'#e0e4f4')}${rpCell(bpAMI,true,'#e0e4f4')}</tr>`);
 
-  addHd('A.2 Biaya Pendukung');
+  // ── A.2 PT JTT ──
+  rows.push(hd3('A 1.2  Biaya Pokok PT. Jogja Tugu Trans'));
+  rows.push(hd4('A.1.2.1  Biaya Langsung'));
+  directGrps.forEach(({label})=>rows.push(subhd(label)));
+  rows.push(hd4('A.1.2.2  Biaya Tidak Langsung'));
+  rows.push(`<tr>${cell('II.',false,true,8,'#e0e4f4')}${cell('Jumlah Biaya Pokok PT. Jogja Tugu Trans',false,true,8,'#e0e4f4')}${rpCell(bpJTT>0?bpJTT:null,true,'#e0e4f4')}</tr>`);
+
+  // ── Rekap ──
+  rows.push(`<tr>${cell('III.',false,true,8,'#d4d8f0')}${cell('Jumlah Biaya Pokok PT. AMI + PT. JTT',false,true,8,'#d4d8f0')}${rpCell(bpTotal,true,'#d4d8f0')}</tr>`);
+  rows.push(`<tr>${cell('IV.',false,true,8,'#d4d8f0')}${cell('Bagian Keuntungan PT. AMI (7% × I.)',false,true,8,'#d4d8f0')}${rpCell(kuAMI,true,'#d4d8f0')}</tr>`);
+  rows.push(`<tr>${cell('V.',false,true,8,'#d4d8f0')}${cell('Bagian Keuntungan PT. JTT (7% × II.)',false,true,8,'#d4d8f0')}${rpCell(kuJTT>0?kuJTT:null,true,'#d4d8f0')} </tr>`);
+  rows.push(`<tr>${cell('VI.',false,true,8,'#ccd0ea')}${cell('Jumlah Biaya Pokok + Keuntungan  ( III + IV + V )',false,true,8,'#ccd0ea')}${rpCell(bpTotal+kuTotal,true,'#ccd0ea')}</tr>`);
+
+  // ── Biaya Pendukung ──
+  rows.push(hd3('A 2  Biaya Pendukung'));
   if(d.kd['pendukung']){
     let n=1;
-    Object.keys(d.kd['pendukung']).forEach(key=>{
-      const item=d.kd['pendukung'][key];
-      addRow(16,`${n++}. ${item.label}`,item.total||null);
+    Object.keys(d.kd['pendukung']).forEach(k=>{
+      const item=d.kd['pendukung'][k];
+      // pramugara dibagi AMI dan JTT
+      if(k==='pramugara'){
+        const totAMI=item.total||0;
+        const totJTT=d.pramugaraJTT||0;
+        rows.push(`<tr>${cell(`${n++}.  ${item.label}`,false,false,24)}<td style="${S};border:1px solid #666;padding:4px 8px;text-align:right;font-size:10pt">${totAMI>0?'Rp '+fmtNum(totAMI):''}</td></tr>`);
+        if(totAMI>0){
+          rows.push(`<tr><td style="${S};border:1px solid #ccc;padding:2px 36px;font-size:9.5pt;color:#444">a.  Pramugara/Pramugari PT AMI</td><td style="${S};border:1px solid #ccc;padding:2px 8px;text-align:right;font-size:9.5pt">Rp ${fmtNum(totAMI)}</td></tr>`);
+        }
+        if(totJTT>0){
+          rows.push(`<tr><td style="${S};border:1px solid #ccc;padding:2px 36px;font-size:9.5pt;color:#444">b.  Pramugara/Pramugari PT JTT</td><td style="${S};border:1px solid #ccc;padding:2px 8px;text-align:right;font-size:9.5pt">Rp ${fmtNum(totJTT)}</td></tr>`);
+        }
+      } else {
+        rows.push(dataRow(`${n++}.  ${item.label}`, item.total||null, 24));
+      }
       if(item.details&&item.details.length){
         item.details.forEach((r,i)=>{
-          const tot=(parseFloat(r.qty)||0)*(parseFloat(r.hs)||0);
-          rows.push(`<tr style="font-size:10px;color:#555"><td style="border:1px solid #ddd;padding:3px 8px;padding-left:28px">${i+1}. ${r.ket||'–'} (${fmtNum(r.qty)} ${r.sat} × ${fmtRp(r.hs)})</td><td style="border:1px solid #ddd;padding:3px 8px;text-align:right;font-family:'Courier New'">${fmtRp(tot)}</td></tr>`);
+          const dt=(parseFloat(r.qty)||0)*(parseFloat(r.hs)||0);
+          rows.push(`<tr><td style="${S};border:1px solid #ccc;padding:2px 36px;font-size:9pt;color:#555">${i+1}. ${r.ket||'–'} (${fmtNum(r.qty)} ${r.sat} × Rp ${fmtNum(r.hs)})</td>${rpCell(dt>0?dt:null)}</tr>`);
         });
       }
     });
   }
-  rows.push(`<tr style="background:#ccd0ef;font-weight:700"><td style="border:1px solid #444;padding:5px 8px">IV. Jumlah Biaya Pendukung</td><td style="border:1px solid #444;padding:5px 8px;text-align:right;font-family:'Courier New'">${fmtRp(d.pd)}</td></tr>`);
-  rows.push(`<tr style="background:#bbbde8;font-weight:700"><td style="border:1px solid #333;padding:6px 8px">V. Total Biaya Operasional (III + IV)</td><td style="border:1px solid #333;padding:6px 8px;text-align:right;font-family:'Courier New'">${fmtRp(d.bp+d.ku+d.pd)}</td></tr>`);
+  rows.push(`<tr>${cell('VII.',false,true,8,'#ccd0ea')}${cell('Jumlah Biaya Pendukung',false,true,8,'#ccd0ea')}${rpCell(d.pd,true,'#ccd0ea')}</tr>`);
+  rows.push(`<tr>${cell('VIII.',false,true,8,'#bbbde5')}${cell('Total Biaya Operasional  ( VI + VII )',false,true,8,'#bbbde5')}${rpCell(bpTotal+kuTotal+d.pd,true,'#bbbde5')}</tr>`);
 
-  addHd('B. PENDAPATAN OPERASIONAL');
-  addRow(16,'1. Pendapatan Tiket',(d.kd['tiket']?.tiket_tunai?.total||0)+(d.kd['tiket']?.tiket_nontunai?.total||0));
-  addRow(16,'2. Pendapatan Lain-lain',(d.kd['pendapatan_lain']?.branding?.total||0)+(d.kd['pendapatan_lain']?.spare_part_bekas?.total||0));
-  rows.push(`<tr style="background:#c2f0d0;font-weight:700"><td style="border:1px solid #444;padding:5px 8px">VI. Jumlah Pendapatan Operasional</td><td style="border:1px solid #444;padding:5px 8px;text-align:right;font-family:'Courier New'">${fmtRp(d.pp)}</td></tr>`);
-  rows.push(`<tr style="background:#dde0f5;font-weight:800"><td style="border:2px solid #222;padding:7px 8px">C. SELISIH BIAYA DAN PENDAPATAN OPERASIONAL / SUBSIDI (V − VI)</td><td style="border:2px solid #222;padding:7px 8px;text-align:right;font-family:'Courier New';font-size:13px">${fmtRp(d.subsidi)}</td></tr>`);
+  // ── B. Pendapatan ──
+  rows.push(`<tr>${cell('B',false,true,8,'#dde0f5')}${cell('Pendapatan Operasional',false,true,8,'#dde0f5')}${rpCell(d.pp,true,'#dde0f5')}</tr>`);
+  const tikTunai=(d.kd['tiket']?.tiket_tunai?.total||0);
+  const tikNonTunai=(d.kd['tiket']?.tiket_nontunai?.total||0);
+  const lainLain=(d.kd['pendapatan_lain']?.branding?.total||0)+(d.kd['pendapatan_lain']?.spare_part_bekas?.total||0);
+  rows.push(dataRow('1.  Pendapatan Tiket',tikTunai+tikNonTunai>0?tikTunai+tikNonTunai:null,24));
+  if(tikTunai>0) rows.push(`<tr><td style="${S};border:1px solid #ccc;padding:2px 36px;font-size:9.5pt;color:#444">-  Pendapatan Tiket Tunai</td>${rpCell(tikTunai)}</tr>`);
+  if(tikNonTunai>0) rows.push(`<tr><td style="${S};border:1px solid #ccc;padding:2px 36px;font-size:9.5pt;color:#444">-  Pendapatan Non Tunai</td>${rpCell(tikNonTunai)}</tr>`);
+  rows.push(dataRow('2.  Pendapatan Lain-lain',lainLain>0?lainLain:null,24));
+  rows.push(`<tr>${cell('IX',false,true,8,'#ccd0ea')}${cell('Jumlah Pendapatan Operasional',false,true,8,'#ccd0ea')}${rpCell(d.pp,true,'#ccd0ea')}</tr>`);
 
-  return`<table style="width:100%;border-collapse:collapse;font-size:11px">${rows.join('')}</table>`;
+  // ── C. Subsidi ──
+  rows.push(`<tr>${cell('C',false,true,8,'#b8bcdf')}${cell('Selisih Biaya dan Pendapatan Operasional/Subsidi  ( VIII - IX )',false,true,8,'#b8bcdf')}${rpCell(d.subsidi,true,'#b8bcdf')}</tr>`);
+
+  return `<table style="width:100%;border-collapse:collapse;${S}"><tbody>${rows.join('')}</tbody></table>`;
 }
 
 function printSurat(){
@@ -1012,17 +1156,21 @@ function openVerif(id){
   html+=`<div class="tc2" style="margin-top:14px">
     <div style="background:rgba(124,111,247,.06);border:1px solid rgba(124,111,247,.14);border-radius:10px;padding:14px">
       <div style="font-weight:700;font-size:12px;color:var(--p);margin-bottom:8px">📋 Nilai Diajukan</div>
-      <div class="sr"><span class="sl2">Biaya Pokok (A+B)</span><span class="sv2">${fmtRp(p.biaya_pokok)}</span></div>
+      <div class="sr"><span class="sl2">Biaya Pokok A+B</span><span class="sv2">${fmtRp(p.biaya_pokok)}</span></div>
       <div class="sr"><span class="sl2">Keuntungan 7%</span><span class="sv2">${fmtRp(p.keuntungan)}</span></div>
-      <div class="sr"><span class="sl2">Biaya Pendukung (C)</span><span class="sv2">${fmtRp(p.pendukung)}</span></div>
-      <div class="sr"><span class="sl2">Pendapatan</span><span class="sv2">(${fmtRp(p.pendapatan)})</span></div>
+      <div class="sr"><span class="sl2">Biaya Pendukung C</span><span class="sv2">${fmtRp(p.pendukung)}</span></div>
+      <div class="sr"><span class="sl2">Pendapatan D</span><span class="sv2">(${fmtRp(p.pendapatan)})</span></div>
       <div class="sr"><span class="sl2" style="color:var(--p);font-weight:700">Subsidi Diajukan</span><span class="sv2" style="color:var(--p)">${fmtRp(p.nilai_pengajuan)}</span></div>
     </div>
     <div style="background:rgba(249,115,22,.05);border:1px solid rgba(249,115,22,.2);border-radius:10px;padding:14px">
       <div style="font-weight:700;font-size:12px;color:var(--orange);margin-bottom:8px">✅ Hasil Verifikasi (Live)</div>
-      <div class="sr"><span class="sl2">Total Disetujui</span><span class="sv2" id="vv-tot">–</span></div>
-      <div class="sr"><span class="sl2">Selisih Total</span><span class="sv2" id="vv-sel">–</span></div>
-      <div class="sr"><span class="sl2">Komponen Selisih</span><span class="sv2" id="vv-jml">–</span></div>
+      <div class="sr"><span class="sl2">Biaya Pokok Disetujui</span><span class="sv2" id="vv-bp">–</span></div>
+      <div class="sr"><span class="sl2">Keuntungan 7% (auto)</span><span class="sv2" id="vv-ku">–</span></div>
+      <div class="sr"><span class="sl2">Biaya Pendukung Disetujui</span><span class="sv2" id="vv-pd">–</span></div>
+      <div class="sr"><span class="sl2">Pendapatan Disetujui</span><span class="sv2" id="vv-pp">–</span></div>
+      <div class="sr" style="border-top:1.5px solid rgba(249,115,22,.3);margin-top:4px;padding-top:8px"><span class="sl2" style="font-weight:700;color:var(--orange)">Subsidi Disetujui</span><span class="sv2" style="color:var(--orange);font-size:15px" id="vv-tot">–</span></div>
+      <div class="sr"><span class="sl2">Selisih vs Diajukan</span><span class="sv2" id="vv-sel">–</span></div>
+      <div class="sr"><span class="sl2">Komponen Berselisih</span><span class="sv2" id="vv-jml">–</span></div>
     </div>
   </div>
   <div class="fgr" style="margin-top:12px"><label class="fl">Catatan Umum Verifikator</label>
@@ -1046,19 +1194,37 @@ function recalcVRow(g,k,orig){
 }
 function recalcVTotal(){
   const p=allData.find(x=>x.id===curVerifId);if(!p)return;
-  let total=0,jml=0;
-  Object.keys(p.komp_data||{}).forEach(g=>Object.keys(p.komp_data[g]).forEach(key=>{
-    const el=document.getElementById(`vv-${g}-${key}`);
-    if(el){const val=parseFloat(el.value||0);total+=val;if(Math.abs(val-(p.komp_data[g][key].total||0))>0)jml++;}
-  }));
-  const sel=total-p.nilai_pengajuan;
-  const eT=document.getElementById('vv-tot');if(eT)eT.textContent=fmtRp(total);
+  // Hitung per grup dengan rumus subsidi yang benar
+  let bpV=0, pdV=0, ppV=0, jml=0;
+  Object.keys(p.komp_data||{}).forEach(g=>{
+    Object.keys(p.komp_data[g]).forEach(key=>{
+      const el=document.getElementById(`vv-${g}-${key}`);
+      if(!el) return;
+      const val=parseFloat(el.value||0);
+      const orig=p.komp_data[g][key].total||0;
+      if(Math.abs(val-orig)>0) jml++;
+      // Kategorikan ke grup yang benar
+      if(BG.includes(g)) bpV+=val;
+      else if(PG.includes(g)) pdV+=val;
+      else if(PPG.includes(g)) ppV+=val;
+    });
+  });
+  const kuV=bpV*0.07;
+  const subsidiV=bpV+kuV+pdV-ppV;
+  const eT=document.getElementById('vv-tot');if(eT)eT.textContent=fmtRp(subsidiV);
+  // Detail breakdown
+  const eBp=document.getElementById('vv-bp');if(eBp)eBp.textContent=fmtRp(bpV);
+  const eKu=document.getElementById('vv-ku');if(eKu)eKu.textContent=fmtRp(kuV);
+  const ePd=document.getElementById('vv-pd');if(ePd)ePd.textContent=fmtRp(pdV);
+  const ePp=document.getElementById('vv-pp');if(ePp)ePp.textContent=fmtRp(ppV);
+  const sel=subsidiV-p.nilai_pengajuan;
   const eS=document.getElementById('vv-sel');if(eS){eS.textContent=(sel>=0?'+':'')+fmtRp(Math.abs(sel));eS.style.color=sel<0?'var(--red)':sel>0?'var(--green)':'inherit';eS.style.fontWeight='700';}
   const eJ=document.getElementById('vv-jml');if(eJ)eJ.textContent=jml+' komponen';
 }
 async function saveVerif(status){
   const p=allData.find(x=>x.id===curVerifId);if(!p)return;
-  let total=0;const vd={},sel=[];
+  const vd={},sel=[];
+  let bpV=0,pdV=0,ppV=0;
   Object.keys(p.komp_data||{}).forEach(g=>{
     vd[g]={};
     Object.keys(p.komp_data[g]).forEach(key=>{
@@ -1066,17 +1232,32 @@ async function saveVerif(status){
       const ketEl=document.getElementById(`ketv-${g}-${key}`);
       if(el){
         const val=parseFloat(el.value||0),ket=ketEl?.value||'',orig=p.komp_data[g][key].total||0,diff=val-orig;
-        total+=val;vd[g][key]={nilaiDisetujui:val,keteranganSelisih:ket};
+        vd[g][key]={nilaiDisetujui:val,keteranganSelisih:ket};
         if(Math.abs(diff)>0)sel.push({group:g,key,label:p.komp_data[g][key].label,satuan:p.komp_data[g][key].satuan,nilaiDiajukan:orig,nilaiDisetujui:val,selisih:diff,keterangan:ket});
+        // Akumulasi per kategori
+        if(BG.includes(g)) bpV+=val;
+        else if(PG.includes(g)) pdV+=val;
+        else if(PPG.includes(g)) ppV+=val;
       }
     });
   });
+  const kuV=bpV*0.07;
+  const subsidiV=bpV+kuV+pdV-ppV;
   const catatan=document.getElementById('vv-catatan')?.value||'';
   const tglV=new Date().toISOString().split('T')[0];
-  const{error}=await supa.from('pengajuan').update({status,nilai_disetujui:total,verif_detail:vd,selisih_detail:sel,catatan_verif:catatan,tgl_verif:tglV}).eq('id',curVerifId);
+  const{error}=await supa.from('pengajuan').update({
+    status,
+    nilai_disetujui:subsidiV,
+    biaya_pokok_verif:bpV,
+    keuntungan_verif:kuV,
+    pendukung_verif:pdV,
+    pendapatan_verif:ppV,
+    verif_detail:vd,selisih_detail:sel,
+    catatan_verif:catatan,tgl_verif:tglV
+  }).eq('id',curVerifId);
   if(error){toast('Gagal: '+error.message,'error');return;}
   const idx=allData.findIndex(x=>x.id===curVerifId);
-  if(idx>=0)allData[idx]={...allData[idx],status,nilai_disetujui:total,verif_detail:vd,selisih_detail:sel,catatan_verif:catatan,tgl_verif:tglV};
+  if(idx>=0)allData[idx]={...allData[idx],status,nilai_disetujui:subsidiV,biaya_pokok_verif:bpV,keuntungan_verif:kuV,pendukung_verif:pdV,pendapatan_verif:ppV,verif_detail:vd,selisih_detail:sel,catatan_verif:catatan,tgl_verif:tglV};
   closeModal('modal-verif');updateStats();renderVfList();
   toast(`✅ ${p.no} ${status==='Terverifikasi'?'disetujui':'ditandai Revisi'}!`,'success');
 }
