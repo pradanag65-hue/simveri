@@ -3,1219 +3,1264 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SIMVERI – Sistem Verifikasi Subsidi TransJogja</title>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<title>SIMVERI – Verifikasi Subsidi TransJogja</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root {
-  --bg: #eef0f8;
-  --bg2: #e8eaf5;
-  --glass: rgba(255,255,255,0.72);
-  --glass2: rgba(255,255,255,0.5);
-  --glass-border: rgba(255,255,255,0.9);
-  --glass-shadow: 0 8px 32px rgba(100,100,200,0.10), 0 2px 8px rgba(100,100,200,0.07);
-  --glass-shadow-lg: 0 20px 60px rgba(100,100,200,0.16), 0 4px 16px rgba(100,100,200,0.10);
-  --purple: #7c6ff7;
-  --purple-dark: #5a4fcf;
-  --purple-light: #a89df8;
-  --blue: #5b8dee;
-  --blue-light: #8bb4f4;
-  --accent: #f97316;
-  --green: #22c55e;
-  --red: #ef4444;
-  --text: #1e1b4b;
-  --text2: #6b6fa8;
-  --text3: #9ca3d4;
-  --sidebar-w: 72px;
-  --header-h: 0px;
-  --radius: 20px;
-  --radius-sm: 12px;
+:root{
+  --bg:#eef0fb;--glass:rgba(255,255,255,.72);--gb:rgba(255,255,255,.92);
+  --gs:0 4px 20px rgba(100,100,200,.09),0 1px 4px rgba(100,100,200,.06);
+  --gsl:0 16px 48px rgba(100,100,200,.15),0 4px 12px rgba(100,100,200,.10);
+  --p:#7c6ff7;--pd:#5a4fcf;--pl:#a89df8;--bl:#5b8dee;
+  --green:#22c55e;--red:#ef4444;--orange:#f97316;--warn:#f59e0b;
+  --t:#1e1b4b;--t2:#6b6fa8;--t3:#9ca3d4;
+  --sw:58px;--r:16px;--rs:10px;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: 'Outfit', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  font-size: 14px;
-  overflow-x: hidden;
-}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:var(--t);min-height:100vh;font-size:14px;overflow-x:hidden}
+body::before{content:'';position:fixed;top:-150px;left:-150px;width:500px;height:500px;background:radial-gradient(circle,rgba(124,111,247,.14),transparent 70%);border-radius:50%;pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;bottom:-120px;right:-80px;width:400px;height:400px;background:radial-gradient(circle,rgba(91,141,238,.11),transparent 70%);border-radius:50%;pointer-events:none;z-index:0}
 
-/* BG BLOBS */
-body::before {
-  content: '';
-  position: fixed;
-  top: -200px; left: -200px;
-  width: 600px; height: 600px;
-  background: radial-gradient(circle, rgba(124,111,247,0.18) 0%, transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 0;
-}
-body::after {
-  content: '';
-  position: fixed;
-  bottom: -150px; right: -100px;
-  width: 500px; height: 500px;
-  background: radial-gradient(circle, rgba(91,141,238,0.15) 0%, transparent 70%);
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 0;
-}
+/* ── SIDEBAR ── */
+.sb{position:fixed;top:0;left:0;bottom:0;width:var(--sw);background:var(--glass);backdrop-filter:blur(18px);border-right:1px solid var(--gb);display:flex;flex-direction:column;align-items:center;padding:14px 0 10px;gap:3px;z-index:100;box-shadow:3px 0 18px rgba(100,100,200,.07)}
+.slogo{width:36px;height:36px;background:linear-gradient(135deg,var(--p),var(--bl));border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;margin-bottom:12px;box-shadow:0 4px 14px rgba(124,111,247,.38);flex-shrink:0}
+.ssp{flex:1}
+.sn{width:40px;height:40px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;color:var(--t2);border:none;background:transparent;transition:all .18s;position:relative}
+.sn:hover{background:rgba(124,111,247,.10);color:var(--p)}
+.sn.active{background:linear-gradient(135deg,var(--p),var(--bl));color:#fff;box-shadow:0 4px 14px rgba(124,111,247,.42)}
+.sn .tip{position:absolute;left:48px;top:50%;transform:translateY(-50%);background:var(--t);color:#fff;font-size:11px;font-weight:600;padding:4px 9px;border-radius:7px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .12s;z-index:300}
+.sn:hover .tip{opacity:1}
+.sdivider{width:28px;height:1px;background:rgba(124,111,247,.12);margin:4px 0}
 
-/* SIDEBAR */
-.sidebar {
-  position: fixed; top: 0; left: 0; bottom: 0;
-  width: var(--sidebar-w);
-  background: var(--glass);
-  backdrop-filter: blur(20px);
-  border-right: 1px solid var(--glass-border);
-  display: flex; flex-direction: column; align-items: center;
-  padding: 20px 0; gap: 6px;
-  z-index: 100;
-  box-shadow: 4px 0 24px rgba(100,100,200,0.08);
-}
-.sidebar-logo {
-  width: 42px; height: 42px;
-  background: linear-gradient(135deg, var(--purple), var(--blue));
-  border-radius: 14px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 20px;
-  margin-bottom: 16px;
-  box-shadow: 0 4px 16px rgba(124,111,247,0.4);
-}
-.sidebar-spacer { flex: 1; }
-.nav-btn {
-  width: 46px; height: 46px;
-  border-radius: 14px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 20px; cursor: pointer;
-  transition: all 0.2s;
-  position: relative;
-  color: var(--text2);
-  border: none; background: transparent;
-}
-.nav-btn:hover { background: rgba(124,111,247,0.12); color: var(--purple); }
-.nav-btn.active {
-  background: linear-gradient(135deg, var(--purple), var(--blue));
-  box-shadow: 0 4px 16px rgba(124,111,247,0.45);
-  color: #fff;
-}
-.nav-btn .tooltip {
-  position: absolute; left: 56px; top: 50%; transform: translateY(-50%);
-  background: var(--text); color: #fff; font-size: 11px; font-weight: 600;
-  padding: 5px 10px; border-radius: 8px; white-space: nowrap;
-  opacity: 0; pointer-events: none; transition: opacity 0.15s;
-}
-.nav-btn:hover .tooltip { opacity: 1; }
+/* ── MAIN ── */
+.main{margin-left:var(--sw);padding:20px 22px;min-height:100vh;position:relative;z-index:1}
 
-/* MAIN */
-.main {
-  margin-left: var(--sidebar-w);
-  padding: 28px 28px 28px;
-  min-height: 100vh;
-  position: relative; z-index: 1;
-}
+/* ── TOPBAR ── */
+.topbar{display:flex;align-items:center;gap:10px;margin-bottom:20px}
+.tbt{flex:1}.tbt h1{font-size:20px;font-weight:700;color:var(--t);letter-spacing:-.4px}
+.tbt p{font-size:12px;color:var(--t2);margin-top:1px}
+.pill{display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;font-size:11px;font-weight:600;background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--gb);box-shadow:var(--gs)}
+.cdot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.cdot.ok{background:var(--green);box-shadow:0 0 5px rgba(34,197,94,.5)}
+.cdot.err{background:var(--red)}.cdot.ld{background:var(--t3)}
+.ib{width:34px;height:34px;border-radius:9px;background:var(--glass);backdrop-filter:blur(12px);border:1px solid var(--gb);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;transition:all .16s;box-shadow:var(--gs)}
+.ib:hover{background:rgba(124,111,247,.10)}
 
-/* TOP BAR */
-.topbar {
-  display: flex; align-items: center; gap: 16px; margin-bottom: 28px;
-}
-.topbar-greeting { flex: 1; }
-.topbar-greeting h1 { font-size: 22px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
-.topbar-greeting p { font-size: 13px; color: var(--text2); margin-top: 2px; }
-.topbar-search {
-  display: flex; align-items: center; gap: 8px;
-  background: var(--glass); backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  border-radius: 30px; padding: 9px 16px;
-  box-shadow: var(--glass-shadow);
-  width: 220px;
-}
-.topbar-search input { border: none; background: transparent; font-family: inherit; font-size: 13px; color: var(--text); outline: none; width: 100%; }
-.topbar-search input::placeholder { color: var(--text3); }
-.topbar-actions { display: flex; gap: 8px; align-items: center; }
-.icon-btn {
-  width: 38px; height: 38px; border-radius: 12px;
-  background: var(--glass); backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 16px; transition: all 0.2s;
-  box-shadow: var(--glass-shadow);
-}
-.icon-btn:hover { background: rgba(124,111,247,0.12); }
-.conn-pill {
-  display: flex; align-items: center; gap: 6px;
-  padding: 6px 14px; border-radius: 30px;
-  font-size: 11px; font-weight: 600;
-  background: var(--glass); backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--glass-shadow);
-}
-.conn-dot { width: 7px; height: 7px; border-radius: 50%; }
-.conn-dot.ok { background: var(--green); box-shadow: 0 0 6px rgba(34,197,94,0.5); }
-.conn-dot.err { background: var(--red); }
-.conn-dot.loading { background: var(--text3); }
+/* ── GLASS CARD ── */
+.gc{background:var(--glass);backdrop-filter:blur(18px);border:1px solid var(--gb);border-radius:var(--r);box-shadow:var(--gs);margin-bottom:14px;overflow:hidden}
+.gch{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.6);display:flex;align-items:center;gap:8px}
+.gct{font-weight:700;font-size:13.5px;color:var(--t)}
+.gcb{padding:16px}
+.gcf{padding:11px 16px;border-top:1px solid rgba(255,255,255,.6);background:rgba(255,255,255,.28);display:flex;gap:7px;justify-content:flex-end}
 
-/* GLASS CARD */
-.gcard {
-  background: var(--glass);
-  backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius);
-  box-shadow: var(--glass-shadow);
-  overflow: hidden;
-}
-.gcard-header {
-  padding: 16px 20px; display: flex; align-items: center; gap: 10px;
-  border-bottom: 1px solid rgba(255,255,255,0.6);
-}
-.gcard-title { font-weight: 700; font-size: 14px; color: var(--text); }
-.gcard-body { padding: 20px; }
-.gcard-footer {
-  padding: 14px 20px; display: flex; gap: 8px; justify-content: flex-end;
-  border-top: 1px solid rgba(255,255,255,0.6);
-  background: rgba(255,255,255,0.3);
-}
+/* ── STAT CARDS ── */
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.sc{background:var(--glass);backdrop-filter:blur(18px);border:1px solid var(--gb);border-radius:var(--r);padding:16px;position:relative;overflow:hidden;transition:transform .18s,box-shadow .18s}
+.sc:hover{transform:translateY(-2px);box-shadow:var(--gsl)}
+.sc::after{content:'';position:absolute;top:-24px;right:-24px;width:80px;height:80px;border-radius:50%;opacity:.09}
+.sc.p::after{background:var(--p)}.sc.o::after{background:var(--orange)}.sc.g::after{background:var(--green)}.sc.b::after{background:var(--bl)}
+.sico{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;margin-bottom:9px}
+.sc.p .sico{background:rgba(124,111,247,.13)}.sc.o .sico{background:rgba(249,115,22,.13)}.sc.g .sico{background:rgba(34,197,94,.13)}.sc.b .sico{background:rgba(91,141,238,.13)}
+.slbl{font-size:11px;color:var(--t2);font-weight:500;margin-bottom:2px}
+.sval{font-size:26px;font-weight:800;letter-spacing:-1px}
+.sc.p .sval{color:var(--p)}.sc.o .sval{color:var(--orange)}.sc.g .sval{color:var(--green)}.sc.b .sval{color:var(--bl)}
 
-/* STAT CARDS */
-.stats-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; margin-bottom: 24px; }
-.stat-card {
-  background: var(--glass); backdrop-filter: blur(20px);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius); padding: 20px;
-  box-shadow: var(--glass-shadow);
-  transition: transform 0.2s, box-shadow 0.2s;
-  position: relative; overflow: hidden;
-}
-.stat-card:hover { transform: translateY(-2px); box-shadow: var(--glass-shadow-lg); }
-.stat-card::after {
-  content: ''; position: absolute; top: -30px; right: -30px;
-  width: 100px; height: 100px; border-radius: 50%;
-  opacity: 0.1;
-}
-.stat-card.purple::after { background: var(--purple); }
-.stat-card.blue::after { background: var(--blue); }
-.stat-card.green::after { background: var(--green); }
-.stat-card.orange::after { background: var(--accent); }
-.stat-icon {
-  width: 40px; height: 40px; border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px; margin-bottom: 12px;
-}
-.stat-card.purple .stat-icon { background: rgba(124,111,247,0.15); }
-.stat-card.blue .stat-icon { background: rgba(91,141,238,0.15); }
-.stat-card.green .stat-icon { background: rgba(34,197,94,0.15); }
-.stat-card.orange .stat-icon { background: rgba(249,115,22,0.15); }
-.stat-label { font-size: 12px; color: var(--text2); font-weight: 500; margin-bottom: 4px; }
-.stat-val { font-size: 28px; font-weight: 800; letter-spacing: -1px; }
-.stat-card.purple .stat-val { color: var(--purple); }
-.stat-card.blue .stat-val { color: var(--blue); }
-.stat-card.green .stat-val { color: var(--green); }
-.stat-card.orange .stat-val { color: var(--accent); }
-.stat-badge {
-  display: inline-flex; align-items: center; gap: 3px;
-  font-size: 10px; font-weight: 700; padding: 2px 7px;
-  border-radius: 20px; margin-top: 4px;
-}
-.stat-badge.up { background: rgba(34,197,94,0.12); color: #16a34a; }
-.stat-badge.down { background: rgba(239,68,68,0.12); color: #dc2626; }
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 16px;border-radius:24px;font-size:12.5px;font-weight:600;cursor:pointer;border:none;transition:all .18s;font-family:inherit;white-space:nowrap}
+.btn-p{background:linear-gradient(135deg,var(--p),var(--bl));color:#fff;box-shadow:0 4px 14px rgba(124,111,247,.32)}
+.btn-p:hover{box-shadow:0 6px 20px rgba(124,111,247,.48);transform:translateY(-1px)}
+.btn-g{background:var(--glass);backdrop-filter:blur(10px);border:1px solid var(--gb);color:var(--t2);box-shadow:var(--gs)}
+.btn-g:hover{color:var(--p);border-color:rgba(124,111,247,.3)}
+.btn-s{background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;box-shadow:0 4px 14px rgba(34,197,94,.28)}
+.btn-d{background:linear-gradient(135deg,#dc2626,#ef4444);color:#fff}
+.btn-w{background:linear-gradient(135deg,#d97706,#f59e0b);color:#fff}
+.btn-a{background:linear-gradient(135deg,#f97316,#fb923c);color:#fff;box-shadow:0 4px 14px rgba(249,115,22,.28)}
+.btn-sm{padding:5px 12px;font-size:12px;border-radius:18px}
+.btn-xs{padding:3px 8px;font-size:11px;border-radius:14px}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none!important}
 
-/* SECTION LABEL */
-.sec-label {
-  font-size: 13px; font-weight: 700; color: var(--text);
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 12px;
-}
-.sec-label .toggle-icon { font-size: 16px; color: var(--text3); cursor: pointer; }
+/* ── BADGE ── */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 9px;border-radius:18px;font-size:11px;font-weight:600}
+.bp{background:rgba(124,111,247,.11);color:var(--pd)}.bb{background:rgba(91,141,238,.11);color:#1d4ed8}
+.bo{background:rgba(249,115,22,.11);color:#c2410c}.bg{background:rgba(34,197,94,.11);color:#15803d}
+.br{background:rgba(239,68,68,.11);color:#b91c1c}.bgr{background:rgba(107,111,168,.09);color:var(--t2)}
+.sdot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:2px}
+.dg{background:var(--green)}.do{background:var(--orange)}.dr{background:var(--red)}
 
-/* BUTTONS */
-.btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 9px 18px; border-radius: 30px;
-  font-size: 13px; font-weight: 600; cursor: pointer;
-  border: none; transition: all 0.2s; font-family: inherit;
-  white-space: nowrap;
-}
-.btn-primary {
-  background: linear-gradient(135deg, var(--purple), var(--blue));
-  color: #fff; box-shadow: 0 4px 16px rgba(124,111,247,0.35);
-}
-.btn-primary:hover { box-shadow: 0 6px 24px rgba(124,111,247,0.5); transform: translateY(-1px); }
-.btn-ghost {
-  background: var(--glass); backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  color: var(--text2); box-shadow: var(--glass-shadow);
-}
-.btn-ghost:hover { color: var(--purple); border-color: rgba(124,111,247,0.3); }
-.btn-success { background: linear-gradient(135deg,#16a34a,#22c55e); color:#fff; box-shadow:0 4px 16px rgba(34,197,94,.3); }
-.btn-danger { background: linear-gradient(135deg,#dc2626,#ef4444); color:#fff; box-shadow:0 4px 16px rgba(239,68,68,.3); }
-.btn-warn { background: linear-gradient(135deg,#d97706,#f59e0b); color:#fff; }
-.btn-sm { padding: 6px 14px; font-size: 12px; border-radius: 20px; }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
-.btn-accent { background: linear-gradient(135deg,#f97316,#fb923c); color:#fff; box-shadow:0 4px 16px rgba(249,115,22,.3); }
+/* ── FORM ── */
+.fg{display:grid;gap:12px}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr 1fr}
+.fgr{display:flex;flex-direction:column;gap:5px}
+.fl{font-size:12px;font-weight:600;color:var(--t2)}.req{color:var(--red)}
+.fc{padding:9px 12px;border:1.5px solid rgba(255,255,255,.82);border-radius:var(--rs);font-size:13px;font-family:inherit;color:var(--t);background:var(--glass);backdrop-filter:blur(8px);outline:none;transition:all .18s;width:100%}
+.fc:focus{border-color:rgba(124,111,247,.5);box-shadow:0 0 0 3px rgba(124,111,247,.09);background:rgba(255,255,255,.88)}
+select.fc{cursor:pointer}
+textarea.fc{resize:vertical;min-height:66px}
 
-/* BADGE */
-.badge {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
-}
-.badge-purple { background: rgba(124,111,247,0.12); color: var(--purple-dark); }
-.badge-blue { background: rgba(91,141,238,0.12); color: #1d4ed8; }
-.badge-orange { background: rgba(249,115,22,0.12); color: #c2410c; }
-.badge-green { background: rgba(34,197,94,0.12); color: #15803d; }
-.badge-red { background: rgba(239,68,68,0.12); color: #b91c1c; }
-.badge-gray { background: rgba(107,111,168,0.1); color: var(--text2); }
-.status-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
-.dot-green { background: var(--green); }
-.dot-orange { background: var(--accent); }
-.dot-red { background: var(--red); }
+/* ── TABLE (daftar/laporan) ── */
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead{background:rgba(255,255,255,.5)}
+th{padding:9px 11px;text-align:left;font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.45px;color:var(--t2);border-bottom:1px solid rgba(255,255,255,.6);white-space:nowrap}
+td{padding:10px 11px;border-bottom:1px solid rgba(255,255,255,.42);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,.46)}
+.tm{font-family:'DM Mono',monospace;font-size:11.5px}
+.tr{text-align:right}.tce{text-align:center}
 
-/* FORM */
-.form-grid { display: grid; gap: 14px; }
-.g2 { grid-template-columns: 1fr 1fr; }
-.g3 { grid-template-columns: 1fr 1fr 1fr; }
-.form-group { display: flex; flex-direction: column; gap: 6px; }
-.form-label { font-size: 12px; font-weight: 600; color: var(--text2); }
-.req { color: var(--red); }
-.form-control {
-  padding: 10px 14px;
-  border: 1.5px solid rgba(255,255,255,0.8);
-  border-radius: var(--radius-sm);
-  font-size: 13px; font-family: inherit; color: var(--text);
-  background: var(--glass); backdrop-filter: blur(8px);
-  outline: none; transition: all 0.2s;
-}
-.form-control:focus {
-  border-color: rgba(124,111,247,0.5);
-  box-shadow: 0 0 0 3px rgba(124,111,247,0.1);
-  background: rgba(255,255,255,0.85);
-}
-select.form-control { cursor: pointer; }
-textarea.form-control { resize: vertical; min-height: 70px; }
+/* ── SECTION HEADERS ── */
+.csh{background:linear-gradient(135deg,var(--p),var(--bl));color:#fff;padding:9px 14px;font-weight:700;font-size:12px;border-radius:10px;margin:14px 0 5px;display:flex;align-items:center;gap:7px;box-shadow:0 4px 12px rgba(124,111,247,.22)}
+.css{background:rgba(124,111,247,.07);border-left:3px solid var(--pl);color:var(--pd);padding:6px 13px;font-weight:600;font-size:12px;border-radius:0 8px 8px 0;margin:8px 0 4px}
 
-/* TABLE */
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-thead { background: rgba(255,255,255,0.5); }
-th {
-  padding: 10px 14px; text-align: left; font-weight: 700; font-size: 11px;
-  text-transform: uppercase; letter-spacing: 0.5px; color: var(--text2);
-  border-bottom: 1px solid rgba(255,255,255,0.6);
-}
-td { padding: 11px 14px; border-bottom: 1px solid rgba(255,255,255,0.4); vertical-align: middle; }
-tr:last-child td { border-bottom: none; }
-tbody tr:hover { background: rgba(255,255,255,0.5); }
-.td-mono { font-family: 'DM Mono', monospace; font-size: 12px; }
-.text-right { text-align: right; }
-.text-center { text-align: center; }
+/* ── KOMPONEN ACCORDION ── */
+.komp-wrap{display:flex;flex-direction:column;gap:6px}
+.komp-box{border:1px solid rgba(124,111,247,.14);border-radius:12px;overflow:hidden;background:rgba(255,255,255,.42);transition:box-shadow .18s}
+.komp-box:hover{box-shadow:0 2px 12px rgba(124,111,247,.10)}
+.komp-hd{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;cursor:pointer;user-select:none;background:rgba(255,255,255,.38);transition:background .15s}
+.komp-hd:hover{background:rgba(255,255,255,.58)}
+.komp-hl{display:flex;align-items:center;gap:8px}
+.komp-name{font-weight:600;font-size:12.5px;color:var(--t)}
+.komp-chevron{font-size:11px;color:var(--t3);transition:transform .2s;flex-shrink:0}
+.komp-chevron.open{transform:rotate(180deg)}
+.komp-total{font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:var(--p)}
+.komp-total.zero{color:var(--t3)}
+.komp-body{display:none;padding:12px;border-top:1px solid rgba(124,111,247,.09)}
+.komp-body.open{display:block}
 
-/* SECTION HEADERS */
-.comp-section-hd {
-  background: linear-gradient(135deg, var(--purple), var(--blue));
-  color: #fff; padding: 10px 16px; font-weight: 700; font-size: 12px;
-  border-radius: 10px; margin: 16px 0 6px;
-  display: flex; align-items: center; gap: 8px;
-  box-shadow: 0 4px 12px rgba(124,111,247,0.25);
-}
-.comp-sub-hd {
-  background: rgba(124,111,247,0.08);
-  border-left: 3px solid var(--purple-light);
-  color: var(--purple-dark); padding: 7px 14px;
-  font-weight: 600; font-size: 12px; border-radius: 0 8px 8px 0;
-  margin: 8px 0 4px;
-}
+/* ── DETAIL TABLE ── */
+.dt-header{display:grid;grid-template-columns:28px 1fr 80px 100px 130px 130px 1fr 100px 34px;gap:5px;padding:4px 6px 6px;border-bottom:1px solid rgba(124,111,247,.08);margin-bottom:4px}
+.dt-hlbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--t3)}
+.dt-row{display:grid;grid-template-columns:28px 1fr 80px 100px 130px 130px 1fr 100px 34px;gap:5px;align-items:center;padding:4px 0;border-bottom:1px dashed rgba(124,111,247,.06)}
+.dt-row:last-child{border-bottom:none}
+.dt-no{font-size:11px;color:var(--t3);font-weight:600;text-align:center}
+.dt-inp{padding:5px 8px;border:1.5px solid rgba(124,111,247,.18);border-radius:8px;font-size:12px;font-family:inherit;background:rgba(255,255,255,.85);outline:none;color:var(--t);width:100%;transition:border-color .15s}
+.dt-inp:focus{border-color:var(--p);box-shadow:0 0 0 2px rgba(124,111,247,.10)}
+.dt-select{padding:5px 6px;border:1.5px solid rgba(124,111,247,.18);border-radius:8px;font-size:11.5px;font-family:inherit;background:rgba(255,255,255,.85);outline:none;color:var(--t);width:100%;cursor:pointer}
+.dt-select:focus{border-color:var(--p)}
+.dt-tot{font-family:'DM Mono',monospace;font-size:11.5px;font-weight:700;color:var(--p);text-align:right;padding:0 4px}
+.dt-del{width:28px;height:28px;border-radius:8px;background:rgba(239,68,68,.10);color:var(--red);border:none;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s}
+.dt-del:hover{background:rgba(239,68,68,.20)}
+.add-row{display:flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--p);cursor:pointer;padding:5px 9px;border-radius:8px;border:1.5px dashed rgba(124,111,247,.28);background:rgba(124,111,247,.04);width:fit-content;margin-top:7px;transition:all .15s}
+.add-row:hover{background:rgba(124,111,247,.11);border-color:var(--p)}
+.dt-file-btn{display:inline-flex;align-items:center;gap:3px;padding:4px 9px;border-radius:16px;border:1.5px solid rgba(124,111,247,.22);cursor:pointer;font-size:11px;font-weight:600;background:rgba(124,111,247,.05);color:var(--p);transition:all .15s;white-space:nowrap;overflow:hidden;max-width:96px}
+.dt-file-btn:hover{background:rgba(124,111,247,.14)}
+.dt-empty{text-align:center;padding:14px;color:var(--t3);font-size:12px;font-style:italic}
 
-/* COMP TABLE */
-.comp-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-bottom: 8px; }
-.comp-table th {
-  padding: 7px 10px; background: rgba(124,111,247,0.06);
-  font-size: 10px; font-weight: 700; text-transform: uppercase;
-  letter-spacing: 0.5px; color: var(--text2);
-  border: 1px solid rgba(255,255,255,0.6);
-}
-.comp-table td { padding: 5px 7px; border: 1px solid rgba(255,255,255,0.5); vertical-align: middle; }
-.comp-table tbody tr:hover { background: rgba(255,255,255,0.6); }
-.comp-table input[type=number], .comp-table textarea, .comp-table select {
-  width: 100%; padding: 5px 8px;
-  border: 1px solid rgba(124,111,247,0.2);
-  border-radius: 8px; font-size: 12px; font-family: inherit;
-  background: rgba(255,255,255,0.8); outline: none; color: var(--text);
-}
-.comp-table input:focus, .comp-table select:focus, .comp-table textarea:focus {
-  border-color: var(--purple); box-shadow: 0 0 0 2px rgba(124,111,247,0.12);
-}
-.comp-table .tot-cell {
-  font-family: 'DM Mono', monospace; font-weight: 700;
-  color: var(--purple); text-align: right; font-size: 12px;
-}
-.comp-table .desc-cell { font-weight: 600; color: var(--text); font-size: 12px; }
-.file-label {
-  display: inline-flex; align-items: center; gap: 4px;
-  padding: 4px 10px; border-radius: 20px;
-  border: 1px solid rgba(124,111,247,0.25);
-  cursor: pointer; font-size: 11px; font-weight: 600;
-  background: rgba(124,111,247,0.06); color: var(--purple);
-  transition: all 0.2s;
-}
-.file-label:hover { background: rgba(124,111,247,0.15); }
+/* ── SUMMARY BOX ── */
+.sumbox{background:linear-gradient(135deg,rgba(124,111,247,.07),rgba(91,141,238,.07));border:1px solid rgba(124,111,247,.18);border-radius:var(--rs);padding:15px}
+.sr{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:13px;border-bottom:1px dashed rgba(124,111,247,.13)}
+.sr:last-child{border-bottom:none;font-weight:800;font-size:15px;margin-top:6px;padding-top:9px;border-top:1.5px solid rgba(124,111,247,.28)}
+.sl2{color:var(--t2)}.sv2{font-family:'DM Mono',monospace;font-weight:700}
 
-/* SUMMARY BOX */
-.summary-box {
-  background: linear-gradient(135deg, rgba(124,111,247,0.08), rgba(91,141,238,0.08));
-  border: 1px solid rgba(124,111,247,0.2);
-  border-radius: var(--radius-sm); padding: 18px;
-}
-.sum-row {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 6px 0; font-size: 13px;
-  border-bottom: 1px dashed rgba(124,111,247,0.15);
-}
-.sum-row:last-child {
-  border-bottom: none; font-weight: 800; font-size: 15px;
-  margin-top: 8px; padding-top: 10px;
-  border-top: 2px solid rgba(124,111,247,0.3);
-}
-.sum-lbl { color: var(--text2); }
-.sum-val { font-family: 'DM Mono', monospace; font-weight: 700; }
+/* ── MODAL ── */
+.mo{position:fixed;inset:0;background:rgba(30,27,75,.4);backdrop-filter:blur(7px);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
+.mo.open{display:flex}
+.mb{background:rgba(255,255,255,.92);backdrop-filter:blur(22px);border:1px solid var(--gb);border-radius:22px;box-shadow:var(--gsl);width:100%;max-height:92vh;overflow-y:auto;display:flex;flex-direction:column}
+.mh{padding:15px 20px;border-bottom:1px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:rgba(255,255,255,.92);backdrop-filter:blur(22px);z-index:10;border-radius:22px 22px 0 0}
+.mt{font-weight:800;font-size:15px}
+.mbody{padding:18px;flex:1}
+.mf{padding:12px 20px;border-top:1px solid rgba(255,255,255,.6);display:flex;gap:7px;justify-content:flex-end;position:sticky;bottom:0;background:rgba(255,255,255,.92);backdrop-filter:blur(22px)}
 
-/* MODAL */
-.modal-overlay {
-  position: fixed; inset: 0;
-  background: rgba(30,27,75,0.45);
-  backdrop-filter: blur(8px);
-  z-index: 200; display: none;
-  align-items: center; justify-content: center; padding: 16px;
-}
-.modal-overlay.open { display: flex; }
-.modal-box {
-  background: rgba(255,255,255,0.88); backdrop-filter: blur(24px);
-  border: 1px solid var(--glass-border);
-  border-radius: 24px; box-shadow: var(--glass-shadow-lg);
-  width: 100%; max-height: 92vh; overflow-y: auto;
-  display: flex; flex-direction: column;
-}
-.modal-header {
-  padding: 18px 22px; border-bottom: 1px solid rgba(255,255,255,0.6);
-  display: flex; align-items: center; justify-content: space-between;
-  position: sticky; top: 0;
-  background: rgba(255,255,255,0.88); backdrop-filter: blur(24px); z-index: 10;
-  border-radius: 24px 24px 0 0;
-}
-.modal-title { font-weight: 800; font-size: 16px; }
-.modal-body { padding: 20px; flex: 1; }
-.modal-footer {
-  padding: 14px 22px; border-top: 1px solid rgba(255,255,255,0.6);
-  display: flex; gap: 8px; justify-content: flex-end;
-  position: sticky; bottom: 0;
-  background: rgba(255,255,255,0.88); backdrop-filter: blur(24px);
-}
+/* ── VERIF TABLE ── */
+.vt{width:100%;border-collapse:collapse;font-size:12px}
+.vt th{padding:7px 9px;background:linear-gradient(135deg,var(--p),var(--bl));color:#fff;font-size:10px;font-weight:700;text-transform:uppercase;border:1px solid rgba(255,255,255,.15)}
+.vt td{padding:6px 9px;border:1px solid rgba(255,255,255,.5);vertical-align:middle}
+.vt tbody tr:hover{background:rgba(255,255,255,.58)}
+.vt input,.vt textarea{width:100%;padding:5px 7px;border:1.5px solid rgba(124,111,247,.18);border-radius:7px;font-size:12px;font-family:inherit;outline:none;background:rgba(255,255,255,.85);color:var(--t)}
+.vt input:focus,.vt textarea:focus{border-color:var(--p)}
+.vgr td{background:rgba(124,111,247,.07);color:var(--pd);font-weight:700;font-size:11px;padding:5px 10px}
 
-/* VERIF TABLE */
-.verif-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-.verif-table th {
-  padding: 8px 10px;
-  background: linear-gradient(135deg,var(--purple),var(--blue));
-  color: #fff; font-size: 10px; font-weight: 700;
-  text-transform: uppercase; border: 1px solid rgba(255,255,255,0.2);
-}
-.verif-table td { padding: 7px 10px; border: 1px solid rgba(255,255,255,0.5); vertical-align: middle; }
-.verif-table tbody tr:hover { background: rgba(255,255,255,0.6); }
-.verif-table input[type=number], .verif-table textarea {
-  width: 100%; padding: 5px 7px;
-  border: 1px solid rgba(124,111,247,0.2); border-radius: 8px;
-  font-size: 12px; font-family: inherit; outline: none;
-  background: rgba(255,255,255,0.8);
-}
-.verif-table input:focus, .verif-table textarea:focus { border-color: var(--purple); }
-.verif-group-row td {
-  background: rgba(124,111,247,0.07);
-  color: var(--purple-dark); font-weight: 700; font-size: 11px; padding: 5px 10px;
-}
+/* ── ALERT ── */
+.alert{padding:11px 14px;border-radius:var(--rs);font-size:13px;display:flex;align-items:flex-start;gap:8px;margin-bottom:13px}
+.ai{background:rgba(91,141,238,.09);color:#1e40af;border:1px solid rgba(91,141,238,.2)}
+.aw{background:rgba(249,115,22,.08);color:#c2410c;border:1px solid rgba(249,115,22,.2)}
 
-/* ALERT */
-.alert { padding: 12px 15px; border-radius: var(--radius-sm); font-size: 13px; display: flex; align-items: flex-start; gap: 8px; margin-bottom: 14px; }
-.alert-info { background: rgba(91,141,238,0.1); color: #1e40af; border: 1px solid rgba(91,141,238,0.2); }
-.alert-warn { background: rgba(249,115,22,0.08); color: #c2410c; border: 1px solid rgba(249,115,22,0.2); }
-.alert-success { background: rgba(34,197,94,0.08); color: #15803d; border: 1px solid rgba(34,197,94,0.2); }
+/* ── LOADING ── */
+.lovo{position:fixed;inset:0;background:rgba(238,240,251,.88);backdrop-filter:blur(10px);z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
+.spin{width:36px;height:36px;border:3px solid rgba(124,111,247,.2);border-top-color:var(--p);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
 
-/* LOADING */
-.loading-overlay {
-  position: fixed; inset: 0;
-  background: rgba(238,240,248,0.85); backdrop-filter: blur(10px);
-  z-index: 300; display: flex; flex-direction: column;
-  align-items: center; justify-content: center; gap: 14px;
-}
-.spinner {
-  width: 38px; height: 38px;
-  border: 3px solid rgba(124,111,247,0.2);
-  border-top-color: var(--purple);
-  border-radius: 50%; animation: spin 0.7s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-@keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
-.page > * { animation: fadeUp 0.3s ease both; }
+.tc2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.page{display:none}.page.active{display:block;animation:fadeUp .22s ease}
+.toast-c{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:7px}
+.toast{padding:11px 16px;border-radius:13px;font-size:13px;font-weight:600;backdrop-filter:blur(12px);box-shadow:var(--gsl);border:1px solid rgba(255,255,255,.8);animation:fadeUp .22s ease;max-width:340px}
+.toast.info{background:rgba(91,141,238,.92);color:#fff}
+.toast.success{background:rgba(34,197,94,.92);color:#fff}
+.toast.error{background:rgba(239,68,68,.92);color:#fff}
+.toast.warn{background:rgba(249,115,22,.92);color:#fff}
 
-/* CHART BARS */
-.chart-wrap { display: flex; align-items: flex-end; gap: 8px; height: 150px; padding: 0 4px; }
-.chart-bar-col { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
-.chart-bar { width: 100%; border-radius: 8px 8px 0 0; background: linear-gradient(180deg, var(--purple-light), var(--purple)); min-height: 4px; transition: height 0.4s; }
-.chart-bar-col:hover .chart-bar { background: linear-gradient(180deg,var(--blue-light),var(--blue)); }
-.chart-bar-label { font-size: 10px; color: var(--text3); font-weight: 600; }
-.chart-bar-val { font-size: 9px; color: var(--text2); font-family: 'DM Mono', monospace; }
+/* ── CHART ── */
+.chart-w{display:flex;align-items:flex-end;gap:7px;height:130px;padding:0 4px}
+.cbc{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1}
+.cbar{width:100%;border-radius:6px 6px 0 0;background:linear-gradient(180deg,var(--pl),var(--p));min-height:4px;transition:height .38s}
+.cbc:hover .cbar{background:linear-gradient(180deg,#8bb4f4,var(--bl))}
+.cbl{font-size:10px;color:var(--t3);font-weight:600}
+.cbv{font-size:9px;color:var(--t2);font-family:'DM Mono',monospace}
 
-/* MISC */
-.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.mt-8 { margin-top: 8px; }
-.mt-12 { margin-top: 12px; }
-.mt-16 { margin-top: 16px; }
-.mb-12 { margin-bottom: 12px; }
-.font-mono { font-family: 'DM Mono', monospace; }
-.page { display: none; }
-.page.active { display: block; }
+/* ── PDF SURAT ── */
+.pdf-wrap{font-family:'Times New Roman',Georgia,serif;font-size:12px;line-height:1.7;color:#111;background:#fff;padding:36px;border-radius:12px;border:1px solid rgba(124,111,247,.14)}
+.pdf-wrap table{border-collapse:collapse;width:100%}
+.pdf-wrap th,.pdf-wrap td{border:1px solid #444;padding:5px 8px;font-size:11px}
+.pdf-wrap th{background:#f0f0f0;text-align:center;font-weight:700}
 
-/* TOAST */
-.toast-container { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
-.toast {
-  padding: 12px 18px; border-radius: 14px; font-size: 13px; font-weight: 600;
-  backdrop-filter: blur(12px); box-shadow: var(--glass-shadow-lg);
-  border: 1px solid rgba(255,255,255,0.8);
-  animation: fadeUp 0.3s ease;
-  max-width: 340px;
-}
-.toast.info { background: rgba(91,141,238,0.9); color: #fff; }
-.toast.success { background: rgba(34,197,94,0.9); color: #fff; }
-.toast.error { background: rgba(239,68,68,0.9); color: #fff; }
-.toast.warn { background: rgba(249,115,22,0.9); color: #fff; }
-
-@media print { .sidebar,.topbar,.no-print{display:none!important}.main{margin:0;padding:0} }
+@media print{.sb,.topbar,.no-print{display:none!important}.main{margin:0;padding:0}}
 </style>
 </head>
 <body>
 
-<!-- LOADING -->
-<div class="loading-overlay" id="app-loading">
-  <div class="spinner"></div>
-  <div style="font-size:13px;color:var(--text2);font-weight:600">Menghubungkan ke Supabase...</div>
+<div class="lovo" id="app-loading">
+  <div class="spin"></div>
+  <div style="font-size:13px;color:var(--t2);font-weight:600">Menghubungkan ke Supabase...</div>
 </div>
-
-<!-- TOAST CONTAINER -->
-<div class="toast-container" id="toast-container"></div>
+<div class="toast-c" id="toast-c"></div>
 
 <!-- SIDEBAR -->
-<nav class="sidebar">
-  <div class="sidebar-logo">🚌</div>
-  <button class="nav-btn active" onclick="showPage('dashboard')" id="nav-dashboard">
-    <span>📊</span><div class="tooltip">Dashboard</div>
-  </button>
-  <button class="nav-btn" onclick="showPage('input-pengajuan')" id="nav-input-pengajuan">
-    <span>📝</span><div class="tooltip">Input Pengajuan</div>
-  </button>
-  <button class="nav-btn" onclick="showPage('hasil-verifikasi')" id="nav-hasil-verifikasi">
-    <span>✅</span><div class="tooltip">Hasil Verifikasi</div>
-  </button>
-  <button class="nav-btn" onclick="showPage('daftar-pengajuan')" id="nav-daftar-pengajuan">
-    <span>📋</span><div class="tooltip">Daftar Pengajuan</div>
-  </button>
-  <div class="sidebar-spacer"></div>
-  <button class="nav-btn" onclick="showPage('laporan-bulanan')" id="nav-laporan-bulanan">
-    <span>📅</span><div class="tooltip">Laporan Bulanan</div>
-  </button>
-  <button class="nav-btn" onclick="showPage('laporan-triwulan')" id="nav-laporan-triwulan">
-    <span>📆</span><div class="tooltip">Laporan Triwulan</div>
-  </button>
-  <button class="nav-btn" onclick="showPage('laporan-semester')" id="nav-laporan-semester">
-    <span>🗓️</span><div class="tooltip">Laporan Semester</div>
-  </button>
-  <button class="nav-btn" onclick="showPage('laporan-tahunan')" id="nav-laporan-tahunan">
-    <span>📁</span><div class="tooltip">Laporan Tahunan</div>
-  </button>
+<nav class="sb">
+  <div class="slogo">🚌</div>
+  <button class="sn active" id="nav-dashboard" onclick="showPage('dashboard')"><span>📊</span><div class="tip">Dashboard</div></button>
+  <button class="sn" id="nav-input-pengajuan" onclick="showPage('input-pengajuan')"><span>📝</span><div class="tip">Input Pengajuan</div></button>
+  <button class="sn" id="nav-hasil-verifikasi" onclick="showPage('hasil-verifikasi')"><span>✅</span><div class="tip">Hasil Verifikasi</div></button>
+  <button class="sn" id="nav-daftar-pengajuan" onclick="showPage('daftar-pengajuan')"><span>📋</span><div class="tip">Daftar Pengajuan</div></button>
+  <div class="ssp"></div>
+  <div class="sdivider"></div>
+  <button class="sn" id="nav-laporan-bulanan" onclick="showPage('laporan-bulanan')"><span>📅</span><div class="tip">Lap. Bulanan</div></button>
+  <button class="sn" id="nav-laporan-triwulan" onclick="showPage('laporan-triwulan')"><span>📆</span><div class="tip">Lap. Triwulan</div></button>
+  <button class="sn" id="nav-laporan-semester" onclick="showPage('laporan-semester')"><span>🗓️</span><div class="tip">Lap. Semester</div></button>
+  <button class="sn" id="nav-laporan-tahunan" onclick="showPage('laporan-tahunan')"><span>📁</span><div class="tip">Lap. Tahunan</div></button>
 </nav>
 
-<!-- MAIN -->
 <div class="main">
-
-  <!-- TOP BAR -->
+  <!-- TOPBAR -->
   <div class="topbar no-print">
-    <div class="topbar-greeting">
-      <h1 id="topbar-title">Selamat Datang 👋</h1>
-      <p id="topbar-sub">Sistem Verifikasi Subsidi TransJogja – PT AMI</p>
-    </div>
-    <div class="topbar-search">
-      <span style="font-size:14px;color:var(--text3)">🔍</span>
-      <input type="text" placeholder="Cari pengajuan...">
-    </div>
-    <div class="topbar-actions">
-      <div class="conn-pill">
-        <div class="conn-dot loading" id="conn-dot"></div>
-        <span id="conn-text" style="color:var(--text2)">Menghubungkan...</span>
-      </div>
-      <div class="icon-btn" title="Refresh data" onclick="reloadData()">🔄</div>
-      <div class="icon-btn" title="Cetak" onclick="window.print()">🖨️</div>
-    </div>
+    <div class="tbt"><h1 id="tb-title">Dashboard</h1><p id="tb-sub">Sistem Verifikasi Subsidi TransJogja – PT AMI</p></div>
+    <div class="pill"><div class="cdot ld" id="cdot"></div><span id="ctxt" style="color:var(--t2)">Menghubungkan...</span></div>
+    <div class="ib" onclick="reloadData()" title="Refresh">🔄</div>
+    <div class="ib" onclick="window.print()" title="Cetak">🖨️</div>
   </div>
 
-  <!-- ===== DASHBOARD ===== -->
+  <!-- ═══ DASHBOARD ═══ -->
   <div id="page-dashboard" class="page active">
-    <div class="stats-grid">
-      <div class="stat-card purple">
-        <div class="stat-icon">📋</div>
-        <div class="stat-label">Total Pengajuan</div>
-        <div class="stat-val" id="stat-total">–</div>
-        <div class="stat-badge up" id="stat-total-sub">Semua periode</div>
-      </div>
-      <div class="stat-card orange">
-        <div class="stat-icon">⏳</div>
-        <div class="stat-label">Menunggu Verifikasi</div>
-        <div class="stat-val" id="stat-pending">–</div>
-        <div class="stat-badge down" id="stat-pending-sub">Perlu ditindaklanjuti</div>
-      </div>
-      <div class="stat-card green">
-        <div class="stat-icon">✅</div>
-        <div class="stat-label">Terverifikasi</div>
-        <div class="stat-val" id="stat-verified">–</div>
-        <div class="stat-badge up">Disetujui</div>
-      </div>
-      <div class="stat-card blue">
-        <div class="stat-icon">⚠️</div>
-        <div class="stat-label">Perlu Revisi</div>
-        <div class="stat-val" id="stat-revisi">–</div>
-        <div class="stat-badge down">Ada catatan</div>
-      </div>
+    <div class="sg">
+      <div class="sc p"><div class="sico">📋</div><div class="slbl">Total Pengajuan</div><div class="sval" id="st0">–</div></div>
+      <div class="sc o"><div class="sico">⏳</div><div class="slbl">Menunggu Verifikasi</div><div class="sval" id="st1">–</div></div>
+      <div class="sc g"><div class="sico">✅</div><div class="slbl">Terverifikasi</div><div class="sval" id="st2">–</div></div>
+      <div class="sc b"><div class="sico">⚠️</div><div class="slbl">Perlu Revisi</div><div class="sval" id="st3">–</div></div>
     </div>
-
-    <div class="two-col">
-      <div class="gcard">
-        <div class="gcard-header">
-          <span>📊</span><div class="gcard-title">Nilai Pengajuan per Bulan</div>
-          <div style="margin-left:auto;font-size:11px;color:var(--text3)">juta Rp</div>
-        </div>
-        <div class="gcard-body">
-          <div class="chart-wrap" id="dash-chart">
-            <div style="text-align:center;width:100%;color:var(--text3);font-size:13px;padding:20px">Belum ada data</div>
-          </div>
-        </div>
+    <div class="tc2">
+      <div class="gc">
+        <div class="gch"><span style="font-size:16px">📊</span><div class="gct">Nilai Pengajuan per Bulan</div><div style="margin-left:auto;font-size:10px;color:var(--t3)">juta Rp</div></div>
+        <div class="gcb"><div class="chart-w" id="dash-chart"><div style="text-align:center;width:100%;color:var(--t3);font-size:12px;padding:20px">Belum ada data</div></div></div>
       </div>
-      <div class="gcard">
-        <div class="gcard-header"><span>🕒</span><div class="gcard-title">Pengajuan Terakhir</div></div>
-        <div style="overflow-x:auto">
-          <table>
-            <thead><tr><th>No Pengajuan</th><th>Periode</th><th>Status</th><th>Nilai</th></tr></thead>
-            <tbody id="dash-recent-body">
-              <tr><td colspan="4" class="text-center" style="padding:24px;color:var(--text3)">Memuat...</td></tr>
-            </tbody>
-          </table>
-        </div>
+      <div class="gc">
+        <div class="gch"><span style="font-size:16px">🕒</span><div class="gct">Pengajuan Terakhir</div></div>
+        <div style="overflow-x:auto"><table><thead><tr><th>No Pengajuan</th><th>Periode</th><th>Status</th><th>Nilai</th></tr></thead>
+        <tbody id="dash-tb"><tr><td colspan="4" class="tce" style="padding:22px;color:var(--t3)">Memuat...</td></tr></tbody></table></div>
       </div>
     </div>
   </div>
 
-  <!-- ===== INPUT PENGAJUAN ===== -->
+  <!-- ═══ INPUT PENGAJUAN ═══ -->
   <div id="page-input-pengajuan" class="page">
-    <div class="alert alert-info mb-12">ℹ️ Data tersimpan langsung ke <strong>Supabase Cloud</strong> — dapat diakses dari perangkat manapun secara real-time.</div>
+    <div class="alert ai">ℹ️ Setiap komponen bisa diklik untuk membuka detail. Tambahkan baris rincian (Keterangan, QTY, Satuan, Harga Satuan) sebanyak yang diperlukan. Data otomatis tersimpan ke <strong>Supabase Cloud</strong>.</div>
 
-    <div class="gcard mb-12">
-      <div class="gcard-header" style="background:linear-gradient(135deg,rgba(124,111,247,0.08),rgba(91,141,238,0.08))">
-        <span>🗂️</span><div class="gcard-title">Informasi Umum Pengajuan</div>
-      </div>
-      <div class="gcard-body">
-        <div class="form-grid g3">
-          <div class="form-group"><label class="form-label">No. Pengajuan</label><input class="form-control" id="f-no" readonly style="opacity:.7" placeholder="Auto-generate saat simpan"></div>
-          <div class="form-group"><label class="form-label">Jenis Bus <span class="req">*</span></label>
-            <select class="form-control" id="f-jenis"><option value="">— Pilih Jenis Bus —</option><option>Bus Diesel</option><option>Bus Listrik</option></select>
-          </div>
-          <div class="form-group"><label class="form-label">Periode Bulan <span class="req">*</span></label>
-            <select class="form-control" id="f-bulan"><option value="">— Pilih Bulan —</option>
+    <!-- INFO UMUM -->
+    <div class="gc">
+      <div class="gch" style="background:linear-gradient(135deg,rgba(124,111,247,.07),rgba(91,141,238,.07))"><span style="font-size:16px">🗂️</span><div class="gct">Informasi Umum Pengajuan</div></div>
+      <div class="gcb">
+        <div class="fg g3">
+          <div class="fgr"><label class="fl">No. Pengajuan</label><input class="fc" id="f-no" readonly style="opacity:.65" placeholder="Auto-generate saat simpan"></div>
+          <div class="fgr"><label class="fl">Jenis Bus <span class="req">*</span></label>
+            <select class="fc" id="f-jenis"><option value="">— Pilih Jenis Bus —</option><option>Bus Diesel</option><option>Bus Listrik</option></select></div>
+          <div class="fgr"><label class="fl">Periode Bulan <span class="req">*</span></label>
+            <select class="fc" id="f-bulan"><option value="">— Pilih Bulan —</option>
               <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option>
               <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
               <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
               <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
-            </select>
-          </div>
-          <div class="form-group"><label class="form-label">Tahun</label>
-            <select class="form-control" id="f-tahun"><option value="2024">2024</option><option value="2025" selected>2025</option><option value="2026">2026</option><option value="2027">2027</option></select>
-          </div>
-          <div class="form-group"><label class="form-label">Tanggal Pengajuan</label><input type="date" class="form-control" id="f-tgl"></div>
-          <div class="form-group"><label class="form-label">Penanggung Jawab</label><input type="text" class="form-control" id="f-pj" placeholder="Nama PJ pengajuan"></div>
+            </select></div>
+          <div class="fgr"><label class="fl">Tahun</label>
+            <select class="fc" id="f-tahun"><option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option></select></div>
+          <div class="fgr"><label class="fl">Tanggal Pengajuan</label><input type="date" class="fc" id="f-tgl"></div>
+          <div class="fgr"><label class="fl">Penanggung Jawab</label><input type="text" class="fc" id="f-pj" placeholder="Nama PJ"></div>
         </div>
-        <div class="form-group mt-12"><label class="form-label">Catatan Umum</label><textarea class="form-control" id="f-catatan" rows="2" placeholder="Keterangan umum jika ada..."></textarea></div>
+        <div class="fgr" style="margin-top:12px"><label class="fl">Catatan Umum</label><textarea class="fc" id="f-catatan" rows="2" placeholder="Keterangan umum jika ada..."></textarea></div>
       </div>
     </div>
 
     <!-- A. BIAYA LANGSUNG -->
-    <div class="gcard mb-12">
-      <div class="gcard-header" style="background:linear-gradient(135deg,var(--purple),var(--blue))">
-        <span style="color:#fff">💰</span><div class="gcard-title" style="color:#fff">A. Biaya Langsung</div>
+    <div class="gc">
+      <div class="gch" style="background:linear-gradient(135deg,var(--p),var(--bl))">
+        <span style="font-size:16px;color:#fff">💰</span><div class="gct" style="color:#fff">A. Biaya Langsung</div>
+        <div style="margin-left:auto;font-size:12px;color:rgba(255,255,255,.72)" id="lbl-a">Rp 0</div>
       </div>
-      <div class="gcard-body">
-        <div class="comp-sub-hd">① Biaya Investasi & Administrasi Kendaraan</div><div id="comp-inv"></div>
-        <div class="comp-sub-hd">② Biaya Operasional & Pemeliharaan</div><div id="comp-ops"></div>
-        <div class="comp-sub-hd">③ Sistem Monitoring Keselamatan & Keamanan</div><div id="comp-monitor"></div>
-        <div class="comp-sub-hd">④ Biaya Awak Kendaraan (Pramudi)</div><div id="comp-pramudi"></div>
-        <div class="comp-sub-hd">⑤ Biaya Peningkatan Fasilitas Armada</div><div id="comp-fasilitas"></div>
-        <div class="comp-sub-hd">⑥ Biaya Asuransi Penumpang</div><div id="comp-asuransi"></div>
+      <div class="gcb">
+        <div class="css">① Biaya Investasi &amp; Administrasi Kendaraan</div>
+        <div class="komp-wrap" id="comp-inv"></div>
+        <div class="css" style="margin-top:10px">② Biaya Operasional &amp; Pemeliharaan</div>
+        <div class="komp-wrap" id="comp-ops"></div>
+        <div class="css" style="margin-top:10px">③ Sistem Monitoring Keselamatan &amp; Keamanan</div>
+        <div class="komp-wrap" id="comp-monitor"></div>
+        <div class="css" style="margin-top:10px">④ Biaya Awak Kendaraan (Pramudi)</div>
+        <div class="komp-wrap" id="comp-pramudi"></div>
+        <div class="css" style="margin-top:10px">⑤ Biaya Peningkatan Fasilitas Armada</div>
+        <div class="komp-wrap" id="comp-fasilitas"></div>
+        <div class="css" style="margin-top:10px">⑥ Biaya Asuransi Penumpang</div>
+        <div class="komp-wrap" id="comp-asuransi"></div>
       </div>
     </div>
 
     <!-- B. BIAYA TIDAK LANGSUNG -->
-    <div class="gcard mb-12">
-      <div class="gcard-header" style="background:linear-gradient(135deg,#5a4fcf,#7c6ff7)">
-        <span style="color:#fff">🏢</span><div class="gcard-title" style="color:#fff">B. Biaya Tidak Langsung</div>
+    <div class="gc">
+      <div class="gch" style="background:linear-gradient(135deg,#5a4fcf,#7c6ff7)">
+        <span style="font-size:16px;color:#fff">🏢</span><div class="gct" style="color:#fff">B. Biaya Tidak Langsung</div>
+        <div style="margin-left:auto;font-size:12px;color:rgba(255,255,255,.72)" id="lbl-b">Rp 0</div>
       </div>
-      <div class="gcard-body">
-        <div class="comp-sub-hd">① Biaya Pegawai Kantor, Pool & Bengkel</div><div id="comp-pegawai"></div>
-        <div class="comp-sub-hd">② Biaya Pengelolaan</div><div id="comp-kelola"></div>
+      <div class="gcb">
+        <div class="css">① Biaya Pegawai Kantor, Pool &amp; Bengkel</div>
+        <div class="komp-wrap" id="comp-pegawai"></div>
+        <div class="css" style="margin-top:10px">② Biaya Pengelolaan</div>
+        <div class="komp-wrap" id="comp-kelola"></div>
       </div>
     </div>
 
-    <!-- C. PENDUKUNG -->
-    <div class="gcard mb-12">
-      <div class="gcard-header" style="background:linear-gradient(135deg,#2563eb,#5b8dee)">
-        <span style="color:#fff">🛠️</span><div class="gcard-title" style="color:#fff">C. Biaya Pendukung</div>
+    <!-- C. BIAYA PENDUKUNG -->
+    <div class="gc">
+      <div class="gch" style="background:linear-gradient(135deg,#2563eb,#5b8dee)">
+        <span style="font-size:16px;color:#fff">🛠️</span><div class="gct" style="color:#fff">C. Biaya Pendukung</div>
+        <div style="margin-left:auto;font-size:12px;color:rgba(255,255,255,.72)" id="lbl-c">Rp 0</div>
       </div>
-      <div class="gcard-body"><div id="comp-pendukung"></div></div>
+      <div class="gcb"><div class="komp-wrap" id="comp-pendukung"></div></div>
     </div>
 
     <!-- D. PENDAPATAN -->
-    <div class="gcard mb-12">
-      <div class="gcard-header" style="background:linear-gradient(135deg,#15803d,#22c55e)">
-        <span style="color:#fff">💵</span><div class="gcard-title" style="color:#fff">D. Pendapatan</div>
+    <div class="gc">
+      <div class="gch" style="background:linear-gradient(135deg,#15803d,#22c55e)">
+        <span style="font-size:16px;color:#fff">💵</span><div class="gct" style="color:#fff">D. Pendapatan</div>
+        <div style="margin-left:auto;font-size:12px;color:rgba(255,255,255,.72)" id="lbl-d">Rp 0</div>
       </div>
-      <div class="gcard-body">
-        <div class="comp-sub-hd">① Pendapatan Tiket</div><div id="comp-tiket"></div>
-        <div class="comp-sub-hd">② Pendapatan Lain-lain</div><div id="comp-pendapatan-lain"></div>
+      <div class="gcb">
+        <div class="css">① Pendapatan Tiket</div>
+        <div class="komp-wrap" id="comp-tiket"></div>
+        <div class="css" style="margin-top:10px">② Pendapatan Lain-lain</div>
+        <div class="komp-wrap" id="comp-pendapatan-lain"></div>
       </div>
     </div>
 
     <!-- RINGKASAN -->
-    <div class="gcard">
-      <div class="gcard-header"><span>📊</span><div class="gcard-title">Ringkasan Perhitungan Subsidi</div></div>
-      <div class="gcard-body">
-        <div class="summary-box">
-          <div class="sum-row"><span class="sum-lbl">Total Biaya Pokok (A + B)</span><span class="sum-val" id="sum-biaya-pokok">Rp 0</span></div>
-          <div class="sum-row"><span class="sum-lbl">Keuntungan 7% × Biaya Pokok</span><span class="sum-val" id="sum-keuntungan">Rp 0</span></div>
-          <div class="sum-row"><span class="sum-lbl">Total Biaya Pendukung (C)</span><span class="sum-val" id="sum-pendukung">Rp 0</span></div>
-          <div class="sum-row"><span class="sum-lbl">Total Pendapatan (D)</span><span class="sum-val" id="sum-pendapatan">Rp 0</span></div>
-          <div class="sum-row"><span class="sum-lbl" style="color:var(--purple);font-weight:700">SUBSIDI = (A+B) + Untung 7% + C − D</span><span class="sum-val" style="color:var(--purple);font-size:17px" id="sum-subsidi">Rp 0</span></div>
+    <div class="gc">
+      <div class="gch"><span style="font-size:16px">📊</span><div class="gct">Ringkasan Perhitungan Subsidi</div></div>
+      <div class="gcb">
+        <div class="sumbox">
+          <div class="sr"><span class="sl2">Total Biaya Pokok (A + B)</span><span class="sv2" id="sum-bp">Rp 0</span></div>
+          <div class="sr"><span class="sl2">Keuntungan 7% × Biaya Pokok</span><span class="sv2" id="sum-ku">Rp 0</span></div>
+          <div class="sr"><span class="sl2">Total Biaya Pendukung (C)</span><span class="sv2" id="sum-pd">Rp 0</span></div>
+          <div class="sr"><span class="sl2">Total Pendapatan (D)</span><span class="sv2" id="sum-pp">Rp 0</span></div>
+          <div class="sr"><span class="sl2" style="color:var(--p);font-weight:700">SUBSIDI = (A+B) + 7% + C − D</span><span class="sv2" style="color:var(--p);font-size:17px" id="sum-sub">Rp 0</span></div>
         </div>
       </div>
-      <div class="gcard-footer">
-        <button class="btn btn-ghost" onclick="resetForm()">🔄 Reset Form</button>
-        <button class="btn btn-primary" id="btn-simpan" onclick="savePengajuan()">💾 Simpan ke Supabase</button>
+      <div class="gcf">
+        <button class="btn btn-g" onclick="resetForm()">🔄 Reset</button>
+        <button class="btn btn-g" onclick="previewSurat()">👁 Preview Surat</button>
+        <button class="btn btn-p" id="btn-save" onclick="savePengajuan()">💾 Simpan ke Supabase</button>
       </div>
     </div>
   </div>
 
-  <!-- ===== HASIL VERIFIKASI ===== -->
+  <!-- ═══ HASIL VERIFIKASI ═══ -->
   <div id="page-hasil-verifikasi" class="page">
-    <div class="gcard mb-12">
-      <div class="gcard-header"><span>🔍</span><div class="gcard-title">Filter Pengajuan</div></div>
-      <div class="gcard-body">
-        <div class="form-grid g3">
-          <div class="form-group"><label class="form-label">Periode Bulan</label>
-            <select class="form-control" id="vf-bulan" onchange="renderVfList()"><option value="">— Semua —</option>
-              <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option>
-              <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
-              <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
-              <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
-            </select>
-          </div>
-          <div class="form-group"><label class="form-label">Tahun</label>
-            <select class="form-control" id="vf-tahun" onchange="renderVfList()"><option value="2025" selected>2025</option><option value="2026">2026</option></select>
-          </div>
-          <div class="form-group"><label class="form-label">Status</label>
-            <select class="form-control" id="vf-status" onchange="renderVfList()"><option value="">— Semua —</option><option value="Menunggu">Menunggu</option><option value="Terverifikasi">Terverifikasi</option><option value="Revisi">Revisi</option></select>
-          </div>
+    <div class="gc" style="margin-bottom:14px">
+      <div class="gch"><span style="font-size:16px">🔍</span><div class="gct">Filter</div></div>
+      <div class="gcb">
+        <div class="fg g3">
+          <div class="fgr"><label class="fl">Bulan</label><select class="fc" id="vf-bln" onchange="renderVfList()"><option value="">Semua</option><option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option><option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option><option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option><option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option></select></div>
+          <div class="fgr"><label class="fl">Tahun</label><select class="fc" id="vf-thn" onchange="renderVfList()"><option value="2025">2025</option><option value="2026" selected>2026</option></select></div>
+          <div class="fgr"><label class="fl">Status</label><select class="fc" id="vf-st" onchange="renderVfList()"><option value="">Semua</option><option value="Menunggu">Menunggu</option><option value="Terverifikasi">Terverifikasi</option><option value="Revisi">Revisi</option></select></div>
         </div>
       </div>
     </div>
-    <div class="gcard">
-      <div class="gcard-header"><span>📋</span><div class="gcard-title">Daftar Pengajuan</div><div style="margin-left:auto"><button class="btn btn-ghost btn-sm" onclick="renderVfList()">🔄 Refresh</button></div></div>
-      <div style="overflow-x:auto">
-        <table><thead><tr><th>No Pengajuan</th><th>Jenis Bus</th><th>Periode</th><th>Nilai Diajukan</th><th>Nilai Disetujui</th><th>Selisih</th><th>Komp.</th><th>Status</th><th>Aksi</th></tr></thead>
-        <tbody id="vf-list-body"><tr><td colspan="9" class="text-center" style="padding:24px;color:var(--text3)">Memuat data...</td></tr></tbody></table>
-      </div>
+    <div class="gc">
+      <div class="gch"><span style="font-size:16px">📋</span><div class="gct">Daftar Pengajuan</div><div style="margin-left:auto"><button class="btn btn-g btn-sm" onclick="renderVfList()">🔄</button></div></div>
+      <div style="overflow-x:auto"><table><thead><tr><th>No Pengajuan</th><th>Jenis</th><th>Periode</th><th>Nilai Diajukan</th><th>Nilai Disetujui</th><th>Selisih</th><th>Komp.</th><th>Status</th><th>Aksi</th></tr></thead>
+      <tbody id="vf-tb"><tr><td colspan="9" class="tce" style="padding:22px;color:var(--t3)">Memuat...</td></tr></tbody></table></div>
     </div>
   </div>
 
-  <!-- ===== DAFTAR PENGAJUAN ===== -->
+  <!-- ═══ DAFTAR PENGAJUAN ═══ -->
   <div id="page-daftar-pengajuan" class="page">
-    <div style="display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:16px" class="no-print">
-      <button class="btn btn-ghost" onclick="renderDaftar()">🔄 Refresh</button>
-      <button class="btn btn-accent" onclick="showPage('input-pengajuan')">+ Pengajuan Baru</button>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-bottom:14px" class="no-print">
+      <button class="btn btn-g" onclick="renderDaftar()">🔄 Refresh</button>
+      <button class="btn btn-a" onclick="showPage('input-pengajuan')">+ Pengajuan Baru</button>
     </div>
-    <div class="gcard">
-      <div style="padding:12px 18px;border-bottom:1px solid rgba(255,255,255,0.6);display:flex;gap:8px;flex-wrap:wrap">
-        <select class="form-control" id="daf-bulan" style="width:auto" onchange="renderDaftar()"><option value="">Semua Bulan</option>
-          <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option>
-          <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
-          <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
-          <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
-        </select>
-        <select class="form-control" id="daf-tahun" style="width:auto" onchange="renderDaftar()"><option value="">Semua Tahun</option><option value="2025">2025</option><option value="2026">2026</option></select>
-        <select class="form-control" id="daf-status" style="width:auto" onchange="renderDaftar()"><option value="">Semua Status</option><option value="Menunggu">Menunggu</option><option value="Terverifikasi">Terverifikasi</option><option value="Revisi">Revisi</option></select>
+    <div class="gc">
+      <div style="padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.6);display:flex;gap:8px;flex-wrap:wrap">
+        <select class="fc" id="df-bln" style="width:auto" onchange="renderDaftar()"><option value="">Semua Bulan</option><option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">Mei</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Agu</option><option value="9">Sep</option><option value="10">Okt</option><option value="11">Nov</option><option value="12">Des</option></select>
+        <select class="fc" id="df-thn" style="width:auto" onchange="renderDaftar()"><option value="">Semua Tahun</option><option value="2025">2025</option><option value="2026">2026</option></select>
+        <select class="fc" id="df-st" style="width:auto" onchange="renderDaftar()"><option value="">Semua Status</option><option value="Menunggu">Menunggu</option><option value="Terverifikasi">Terverifikasi</option><option value="Revisi">Revisi</option></select>
       </div>
-      <div style="overflow-x:auto">
-        <table><thead><tr><th>#</th><th>No Pengajuan</th><th>Jenis Bus</th><th>Periode</th><th>PJ</th><th>Nilai Diajukan</th><th>Nilai Disetujui</th><th>Selisih</th><th>Status</th><th>Aksi</th></tr></thead>
-        <tbody id="daftar-body"><tr><td colspan="10" class="text-center" style="padding:24px;color:var(--text3)">Memuat data...</td></tr></tbody></table>
-      </div>
+      <div style="overflow-x:auto"><table><thead><tr><th>#</th><th>No Pengajuan</th><th>Jenis</th><th>Periode</th><th>PJ</th><th>Nilai Diajukan</th><th>Disetujui</th><th>Selisih</th><th>Status</th><th>Aksi</th></tr></thead>
+      <tbody id="df-tb"><tr><td colspan="10" class="tce" style="padding:22px;color:var(--t3)">Memuat...</td></tr></tbody></table></div>
     </div>
   </div>
 
-  <!-- ===== LAPORAN PAGES ===== -->
+  <!-- ═══ LAPORAN PAGES ═══ -->
   <div id="page-laporan-bulanan" class="page">
-    <div class="page-actions no-print" style="display:flex;gap:8px;margin-bottom:16px;align-items:center">
-      <select class="form-control" id="lb-bulan" style="width:auto" onchange="renderLapBulanan()"><option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option><option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option><option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option><option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option></select>
-      <select class="form-control" id="lb-tahun" style="width:auto" onchange="renderLapBulanan()"><option value="2025" selected>2025</option><option value="2026">2026</option></select>
-      <button class="btn btn-ghost" onclick="window.print()">🖨️ Cetak</button>
+    <div class="no-print" style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
+      <select class="fc" id="lb-bln" style="width:auto" onchange="renderLapBulanan()"><option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option><option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option><option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option><option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option></select>
+      <select class="fc" id="lb-thn" style="width:auto" onchange="renderLapBulanan()"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
+      <button class="btn btn-g" onclick="window.print()">🖨️ Cetak</button>
     </div>
-    <div id="lap-bulanan-content"></div>
+    <div id="lap-bln"></div>
   </div>
   <div id="page-laporan-triwulan" class="page">
-    <div class="page-actions no-print" style="display:flex;gap:8px;margin-bottom:16px;align-items:center">
-      <select class="form-control" id="ltw-q" style="width:auto" onchange="renderLapTriwulan()"><option value="1">Triwulan I (Jan–Mar)</option><option value="2">Triwulan II (Apr–Jun)</option><option value="3">Triwulan III (Jul–Sep)</option><option value="4">Triwulan IV (Okt–Des)</option></select>
-      <select class="form-control" id="ltw-tahun" style="width:auto" onchange="renderLapTriwulan()"><option value="2025" selected>2025</option><option value="2026">2026</option></select>
-      <button class="btn btn-ghost" onclick="window.print()">🖨️ Cetak</button>
+    <div class="no-print" style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
+      <select class="fc" id="lq-q" style="width:auto" onchange="renderLapTriwulan()"><option value="1">Triwulan I (Jan–Mar)</option><option value="2">Triwulan II (Apr–Jun)</option><option value="3">Triwulan III (Jul–Sep)</option><option value="4">Triwulan IV (Okt–Des)</option></select>
+      <select class="fc" id="lq-thn" style="width:auto" onchange="renderLapTriwulan()"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
+      <button class="btn btn-g" onclick="window.print()">🖨️ Cetak</button>
     </div>
-    <div id="lap-triwulan-content"></div>
+    <div id="lap-twl"></div>
   </div>
   <div id="page-laporan-semester" class="page">
-    <div class="page-actions no-print" style="display:flex;gap:8px;margin-bottom:16px;align-items:center">
-      <select class="form-control" id="ls-sem" style="width:auto" onchange="renderLapSemester()"><option value="1">Semester I (Jan–Jun)</option><option value="2">Semester II (Jul–Des)</option></select>
-      <select class="form-control" id="ls-tahun" style="width:auto" onchange="renderLapSemester()"><option value="2025" selected>2025</option><option value="2026">2026</option></select>
-      <button class="btn btn-ghost" onclick="window.print()">🖨️ Cetak</button>
+    <div class="no-print" style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
+      <select class="fc" id="ls-s" style="width:auto" onchange="renderLapSemester()"><option value="1">Semester I (Jan–Jun)</option><option value="2">Semester II (Jul–Des)</option></select>
+      <select class="fc" id="ls-thn" style="width:auto" onchange="renderLapSemester()"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
+      <button class="btn btn-g" onclick="window.print()">🖨️ Cetak</button>
     </div>
-    <div id="lap-semester-content"></div>
+    <div id="lap-sem"></div>
   </div>
   <div id="page-laporan-tahunan" class="page">
-    <div class="page-actions no-print" style="display:flex;gap:8px;margin-bottom:16px;align-items:center">
-      <select class="form-control" id="lta-tahun" style="width:auto" onchange="renderLapTahunan()"><option value="2025" selected>2025</option><option value="2026">2026</option></select>
-      <button class="btn btn-ghost" onclick="window.print()">🖨️ Cetak</button>
+    <div class="no-print" style="display:flex;gap:8px;margin-bottom:14px;align-items:center">
+      <select class="fc" id="la-thn" style="width:auto" onchange="renderLapTahunan()"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
+      <button class="btn btn-g" onclick="window.print()">🖨️ Cetak</button>
     </div>
-    <div id="lap-tahunan-content"></div>
+    <div id="lap-thn"></div>
   </div>
 
 </div><!-- /main -->
 
 <!-- MODAL VERIFIKASI -->
-<div class="modal-overlay" id="modal-verif">
-  <div class="modal-box" style="max-width:1000px">
-    <div class="modal-header">
-      <div class="modal-title">✅ Form Hasil Verifikasi Komponen</div>
-      <button class="btn btn-ghost btn-sm" onclick="closeModal('modal-verif')">✕ Tutup</button>
-    </div>
-    <div class="modal-body" id="modal-verif-body"></div>
-    <div class="modal-footer">
-      <button class="btn btn-ghost" onclick="closeModal('modal-verif')">Batal</button>
-      <button class="btn btn-warn" onclick="saveVerifikasi('Revisi')">↩ Tandai Revisi</button>
-      <button class="btn btn-success" onclick="saveVerifikasi('Terverifikasi')">✅ Setujui & Simpan</button>
-    </div>
+<div class="mo" id="modal-verif">
+  <div class="mb" style="max-width:960px">
+    <div class="mh"><div class="mt">✅ Form Hasil Verifikasi</div><button class="btn btn-g btn-sm" onclick="closeModal('modal-verif')">✕ Tutup</button></div>
+    <div class="mbody" id="modal-verif-body"></div>
+    <div class="mf"><button class="btn btn-g" onclick="closeModal('modal-verif')">Batal</button><button class="btn btn-w" onclick="saveVerif('Revisi')">↩ Revisi</button><button class="btn btn-s" onclick="saveVerif('Terverifikasi')">✅ Setujui & Simpan</button></div>
+  </div>
+</div>
+
+<!-- MODAL PREVIEW SURAT -->
+<div class="mo" id="modal-surat">
+  <div class="mb" style="max-width:820px">
+    <div class="mh"><div class="mt">📄 Preview Surat Permohonan Pencairan</div><button class="btn btn-g btn-sm" onclick="closeModal('modal-surat')">✕</button></div>
+    <div class="mbody" id="modal-surat-body"></div>
+    <div class="mf"><button class="btn btn-g" onclick="closeModal('modal-surat')">Tutup</button><button class="btn btn-p" onclick="printSurat()">🖨️ Cetak / Export PDF</button></div>
   </div>
 </div>
 
 <script>
-// ====== SUPABASE ======
-const SUPABASE_URL='https://xymvehrgsovzndlqrnak.supabase.co';
-const SUPABASE_KEY='sb_publishable_fYFRRK9-blq6zZ1PaDKCyw_ILsWB3Rs';
+/* ══════════════════════════════════════
+   SUPABASE
+══════════════════════════════════════ */
+const SU='https://xymvehrgsovzndlqrnak.supabase.co';
+const SK='sb_publishable_fYFRRK9-blq6zZ1PaDKCyw_ILsWB3Rs';
 const {createClient}=supabase;
-const supa=createClient(SUPABASE_URL,SUPABASE_KEY);
-let allData=[]; let currentVerifId=null;
+const supa=createClient(SU,SK);
+let allData=[]; let curVerifId=null;
 
-// ====== TOAST ======
 function toast(msg,type='info'){
-  const c=document.getElementById('toast-container');
-  const t=document.createElement('div'); t.className=`toast ${type}`; t.textContent=msg;
-  c.appendChild(t); setTimeout(()=>t.remove(),3200);
+  const c=document.getElementById('toast-c');
+  const t=document.createElement('div');t.className=`toast ${type}`;t.textContent=msg;
+  c.appendChild(t);setTimeout(()=>t.remove(),3200);
 }
-
-// ====== DATA ======
 async function fetchAll(){
   const{data,error}=await supa.from('pengajuan').select('*').order('created_at',{ascending:false});
-  if(error){console.error(error);return[];} return data||[];
+  if(error)throw error; return data||[];
 }
 async function reloadData(){
-  allData=await fetchAll(); updateStats();
-  const cur=document.querySelector('.page.active'); if(cur) {
-    const id=cur.id.replace('page-','');
-    if(id==='hasil-verifikasi') renderVfList();
-    if(id==='daftar-pengajuan') renderDaftar();
-  }
-  toast('Data berhasil diperbarui','success');
+  try{allData=await fetchAll();updateStats();renderCurrentPage();toast('Data diperbarui','success');}
+  catch(e){toast('Gagal refresh: '+e.message,'error');}
 }
 
-// ====== CONSTANTS ======
-const SATUAN_LIST=['Rupiah','Bulan','Tahun','Unit','Orang','Kali','Liter','Km','Pcs','Set','Paket','Lembar','Botol','Drum','Penumpang','Hari','Trip','Armada'];
-const KOMPONEN={
-  inv:[{key:'profisi',label:'Biaya Profisi',satuan:'Rupiah'},{key:'asuransi_kend',label:'Asuransi Kendaraan',satuan:'Bulan'},{key:'asuransi_kredit',label:'Asuransi Kredit',satuan:'Bulan'},{key:'keur_bus',label:'Biaya Keur Bus',satuan:'Kali'},{key:'pkb_stnk',label:'Biaya PKB (STNK)',satuan:'Tahun'},{key:'depresiasi',label:'Nilai Depresiasi',satuan:'Bulan'},{key:'bunga_modal',label:'Biaya Bunga atas Modal',satuan:'Bulan'}],
-  ops:[{key:'bbm',label:'Biaya BBM',satuan:'Liter'},{key:'ban',label:'Biaya Ban',satuan:'Pcs'},{key:'service_kecil',label:'Biaya Service Kecil',satuan:'Kali'},{key:'service_besar',label:'Biaya Service Besar',satuan:'Kali'},{key:'oli_mesin',label:'Penambahan Oli Mesin',satuan:'Liter'},{key:'perawatan_ac',label:'Perawatan & Perbaikan AC',satuan:'Kali'},{key:'overhoul_mesin',label:'Overhaul Mesin',satuan:'Unit'},{key:'overhoul_body',label:'Overhaul Body',satuan:'Unit'},{key:'suku_cadang',label:'Penggantian Suku Cadang',satuan:'Paket'},{key:'pemeliharaan_body',label:'Pemeliharaan Body',satuan:'Kali'},{key:'cuci_bus',label:'Biaya Cuci Bus',satuan:'Kali'},{key:'retribusi',label:'Biaya Retribusi',satuan:'Bulan'}],
-  monitor:[{key:'alat_pengawasan',label:'Alat Pengawasan (CCTV/GPS)',satuan:'Unit'},{key:'biaya_layanan',label:'Biaya Layanan Monitoring',satuan:'Bulan'}],
-  pramudi:[{key:'pramudi',label:'Biaya Awak Kendaraan Pramudi',satuan:'Orang'}],
-  fasilitas:[{key:'pneumatic_door',label:'Pneumatic Door',satuan:'Unit'},{key:'rak_sepeda',label:'Rak Sepeda',satuan:'Unit'},{key:'penetralisir_ion',label:'Penetralisir ION & Penyaring Udara',satuan:'Unit'}],
-  asuransi:[{key:'asuransi_penumpang',label:'Biaya Asuransi Penumpang',satuan:'Penumpang'}],
-  pegawai:[{key:'manajer',label:'Manajer',satuan:'Orang'},{key:'kabeng',label:'Kepala Bengkel & Gudang',satuan:'Orang'},{key:'kabag_ops',label:'Kepala Bagian Operasi',satuan:'Orang'},{key:'kabag_adm',label:'Kepala Bagian Adm & Keuangan',satuan:'Orang'},{key:'staf_bengkel',label:'Staf Bengkel & Gudang',satuan:'Orang'},{key:'staf_ops',label:'Staf Operasional',satuan:'Orang'},{key:'staf_adm',label:'Staf Adm & Keuangan',satuan:'Orang'},{key:'mekanik',label:'Mekanik',satuan:'Orang'},{key:'security',label:'Security',satuan:'Orang'}],
-  kelola:[{key:'sewa_kantor',label:'Sewa Kantor, Pool & Bengkel',satuan:'Bulan'},{key:'peny_kantor',label:'Penyusutan Peralatan Kantor',satuan:'Bulan'},{key:'peny_pool',label:'Penyusutan Peralatan Pool & Bengkel',satuan:'Bulan'},{key:'maint_kantor',label:'Pemeliharaan Kantor, Bengkel & Peralatan',satuan:'Kali'},{key:'adm_kantor',label:'Biaya Administrasi Kantor',satuan:'Bulan'},{key:'listrik_air',label:'Biaya Listrik, Air & Telepon',satuan:'Bulan'},{key:'perjalanan_dinas',label:'Perjalanan Dinas & Rapat Evaluasi',satuan:'Kali'},{key:'izin_usaha',label:'Biaya Izin Usaha',satuan:'Tahun'},{key:'izin_trayek',label:'Biaya Izin Trayek',satuan:'Tahun'},{key:'lain_lain',label:'Biaya Lain-lain',satuan:'Rupiah'}],
-  pendukung:[{key:'mesin_tiket',label:'Pengadaan/Sewa/Pemeliharaan Mesin Tiket & Teknologi',satuan:'Unit'},{key:'pramugara',label:'Biaya Pramugara/Pramugari',satuan:'Orang'},{key:'petugas_halte',label:'Biaya Petugas Halte',satuan:'Orang'},{key:'bencana',label:'Biaya dalam Hal Bencana',satuan:'Rupiah'},{key:'hidangan_rapat',label:'Biaya Hidangan Rapat Evaluasi & Verifikasi',satuan:'Kali'}],
-  tiket:[{key:'tiket_tunai',label:'Pendapatan Tiket Tunai',satuan:'Rupiah'},{key:'tiket_nontunai',label:'Pendapatan Non Tunai',satuan:'Rupiah'}],
-  pendapatan_lain:[{key:'branding',label:'Pendapatan Branding',satuan:'Bulan'},{key:'spare_part_bekas',label:'Pendapatan Spare Part Bekas',satuan:'Rupiah'}],
+/* ══════════════════════════════════════
+   KOMPONEN DEFINITIONS
+══════════════════════════════════════ */
+const SATUAN=['Rupiah','Liter','Pcs','Unit','Orang','Kali','Bulan','Tahun','Paket','Set','Lembar','Km','Drum','Penumpang','Hari','Trip','Armada','Rim'];
+
+const KOMP={
+  inv:[
+    {k:'profisi',l:'Biaya Profisi',s:'Rupiah'},
+    {k:'asuransi_kend',l:'Asuransi Kendaraan',s:'Bulan'},
+    {k:'asuransi_kredit',l:'Asuransi Kredit',s:'Bulan'},
+    {k:'keur_bus',l:'Biaya Keur Bus',s:'Kali'},
+    {k:'pkb_stnk',l:'Biaya PKB (STNK)',s:'Tahun'},
+    {k:'depresiasi',l:'Nilai Depresiasi Bus',s:'Bulan'},
+    {k:'bunga_modal',l:'Biaya Bunga atas Modal',s:'Bulan'},
+  ],
+  ops:[
+    {k:'bbm',l:'Biaya BBM',s:'Liter'},
+    {k:'ban',l:'Biaya Ban',s:'Pcs'},
+    {k:'service_kecil',l:'Biaya Service Kecil',s:'Kali'},
+    {k:'service_besar',l:'Biaya Service Besar',s:'Kali'},
+    {k:'oli_mesin',l:'Penambahan Oli Mesin',s:'Liter'},
+    {k:'perawatan_ac',l:'Perawatan & Perbaikan AC',s:'Kali'},
+    {k:'overhoul_mesin',l:'Overhoul Mesin',s:'Unit'},
+    {k:'overhoul_body',l:'Overhoul Body',s:'Unit'},
+    {k:'suku_cadang',l:'Penggantian Suku Cadang',s:'Paket'},
+    {k:'pemeliharaan_body',l:'Pemeliharaan Body',s:'Kali'},
+    {k:'cuci_bus',l:'Biaya Cuci Bus',s:'Kali'},
+    {k:'retribusi',l:'Biaya Retribusi',s:'Bulan'},
+  ],
+  monitor:[
+    {k:'alat_pengawasan',l:'Alat Pengawasan (CCTV/GPS)',s:'Unit'},
+    {k:'biaya_layanan',l:'Biaya Layanan Monitoring',s:'Bulan'},
+  ],
+  pramudi:[{k:'pramudi',l:'Biaya Awak Kendaraan Pramudi',s:'Orang'}],
+  fasilitas:[
+    {k:'pneumatic_door',l:'Pneumatic Door',s:'Unit'},
+    {k:'rak_sepeda',l:'Rak Sepeda',s:'Unit'},
+    {k:'penetralisir_ion',l:'Penetralisir ION & Penyaring Udara',s:'Unit'},
+  ],
+  asuransi:[{k:'asuransi_penumpang',l:'Biaya Asuransi Penumpang',s:'Penumpang'}],
+  pegawai:[
+    {k:'manajer',l:'Manajer',s:'Orang'},
+    {k:'kabeng',l:'Kepala Bengkel dan Gudang',s:'Orang'},
+    {k:'kabag_ops',l:'Kepala Bagian Operasi',s:'Orang'},
+    {k:'kabag_adm',l:'Kepala Bagian Administrasi dan Keuangan',s:'Orang'},
+    {k:'staf_bengkel',l:'Staf Bengkel dan Gudang',s:'Orang'},
+    {k:'staf_ops',l:'Staf Bagian Operasi',s:'Orang'},
+    {k:'staf_adm',l:'Staf Bagian Administrasi dan Keuangan',s:'Orang'},
+    {k:'mekanik',l:'Mekanik',s:'Orang'},
+    {k:'security',l:'Security',s:'Orang'},
+  ],
+  kelola:[
+    {k:'sewa_kantor',l:'Biaya Sewa Kantor, Pool dan Bengkel',s:'Bulan'},
+    {k:'peny_kantor',l:'Penyusutan Peralatan Kantor',s:'Bulan'},
+    {k:'peny_pool',l:'Penyusutan Peralatan Pool dan Bengkel',s:'Bulan'},
+    {k:'maint_kantor',l:'Pemeliharaan Kantor, Bengkel dan Peralatannya',s:'Kali'},
+    {k:'adm_kantor',l:'Biaya Administrasi Kantor',s:'Bulan'},
+    {k:'listrik_air',l:'Biaya Listrik, Air dan Telepon',s:'Bulan'},
+    {k:'perjalanan_dinas',l:'Biaya Perjalanan Dinas dan Rapat Evaluasi',s:'Kali'},
+    {k:'izin_usaha',l:'Biaya Izin Usaha',s:'Tahun'},
+    {k:'izin_trayek',l:'Biaya Izin Trayek',s:'Tahun'},
+    {k:'lain_lain',l:'Biaya Lain-lain',s:'Rupiah'},
+  ],
+  pendukung:[
+    {k:'mesin_tiket',l:'Biaya Pengadaan/Sewa/Pemeliharaan Mesin Tiket & Teknologi',s:'Unit'},
+    {k:'pramugara',l:'Biaya Pramugara/Pramugari',s:'Orang'},
+    {k:'petugas_halte',l:'Biaya Petugas Halte',s:'Orang'},
+    {k:'bencana',l:'Biaya dalam Hal Bencana',s:'Rupiah'},
+    {k:'hidangan_rapat',l:'Biaya Hidangan Rapat Evaluasi dan Verifikasi',s:'Kali'},
+  ],
+  tiket:[
+    {k:'tiket_tunai',l:'Pendapatan Tiket Tunai',s:'Rupiah'},
+    {k:'tiket_nontunai',l:'Pendapatan Non Tunai',s:'Rupiah'},
+  ],
+  pendapatan_lain:[
+    {k:'branding',l:'Pendapatan Branding',s:'Bulan'},
+    {k:'spare_part_bekas',l:'Pendapatan Spare Part Bekas',s:'Rupiah'},
+  ],
 };
-const BIAYA_GROUPS=['inv','ops','monitor','pramudi','fasilitas','asuransi','pegawai','kelola'];
-const PENDUKUNG_GROUPS=['pendukung'];
-const PENDAPATAN_GROUPS=['tiket','pendapatan_lain'];
-const GL={inv:'A① Biaya Investasi & Administrasi Kendaraan',ops:'A② Biaya Operasional & Pemeliharaan',monitor:'A③ Sistem Monitoring Keselamatan',pramudi:'A④ Biaya Awak Kendaraan (Pramudi)',fasilitas:'A⑤ Peningkatan Fasilitas Armada',asuransi:'A⑥ Asuransi Penumpang',pegawai:'B① Biaya Pegawai Kantor, Pool & Bengkel',kelola:'B② Biaya Pengelolaan',pendukung:'C. Biaya Pendukung',tiket:'D① Pendapatan Tiket',pendapatan_lain:'D② Pendapatan Lain-lain'};
 
-// ====== FORM ======
-function mkSat(key,def){return`<select id="sat-${key}">${SATUAN_LIST.map(s=>`<option${s===def?' selected':''}>${s}</option>`).join('')}</select>`;}
-function renderCompRows(cid,group){
-  const el=document.getElementById(cid);if(!el)return;
-  let h=`<table class="comp-table"><thead><tr><th style="width:22%">Deskripsi</th><th style="width:11%">Satuan</th><th style="width:13%">Harga Satuan (Rp)</th><th style="width:7%">QTY</th><th style="width:13%">Total (Rp)</th><th style="width:22%">Keterangan</th><th style="width:12%">Berkas</th></tr></thead><tbody>`;
-  KOMPONEN[group].forEach(item=>{
-    h+=`<tr><td class="desc-cell">${item.label}</td><td>${mkSat(item.key,item.satuan)}</td>
-    <td><input type="number" min="0" id="hs-${item.key}" placeholder="0" oninput="calcTotal('${item.key}')"></td>
-    <td><input type="number" min="0" id="qty-${item.key}" placeholder="0" oninput="calcTotal('${item.key}')"></td>
-    <td class="tot-cell" id="tot-${item.key}">0</td>
-    <td><textarea id="ket-${item.key}" rows="1" placeholder="Keterangan..." style="min-height:30px;resize:vertical"></textarea></td>
-    <td style="text-align:center"><label class="file-label">📎 <span id="ftxt-${item.key}">Unggah</span><input type="file" accept=".pdf,.jpg,.png" style="display:none" id="file-${item.key}" onchange="markFile('${item.key}')"></label></td>
-    </tr>`;
-  });
-  h+='</tbody></table>'; el.innerHTML=h;
+const BG=['inv','ops','monitor','pramudi','fasilitas','asuransi','pegawai','kelola'];
+const PG=['pendukung'];
+const PPG=['tiket','pendapatan_lain'];
+const GL={inv:'A.1 Biaya Investasi & Administrasi Kendaraan',ops:'A.2 Biaya Operasional & Pemeliharaan',monitor:'A.3 Sistem Monitoring Keselamatan',pramudi:'A.4 Biaya Awak Kendaraan (Pramudi)',fasilitas:'A.5 Biaya Peningkatan Fasilitas Armada',asuransi:'A.6 Biaya Asuransi Penumpang',pegawai:'B.1 Biaya Pegawai Kantor, Pool & Bengkel',kelola:'B.2 Biaya Pengelolaan',pendukung:'C. Biaya Pendukung',tiket:'D.1 Pendapatan Tiket',pendapatan_lain:'D.2 Pendapatan Lain-lain'};
+
+/* ══════════════════════════════════════
+   DETAIL STATE — { group: { key: [{ket,qty,sat,hs,ket2,hasFile,fileName}] } }
+══════════════════════════════════════ */
+let DS={};
+function initDS(){
+  DS={};
+  Object.keys(KOMP).forEach(g=>{DS[g]={};KOMP[g].forEach(i=>{DS[g][i.k]=[];});});
 }
-function calcTotal(key){
-  const hs=parseFloat(document.getElementById('hs-'+key)?.value||0);
-  const qty=parseFloat(document.getElementById('qty-'+key)?.value||0);
-  const el=document.getElementById('tot-'+key); if(el) el.textContent=fmtNum(hs*qty);
+
+/* ══════════════════════════════════════
+   RENDER KOMPONEN GROUP
+══════════════════════════════════════ */
+function mkSatOpts(def){
+  return SATUAN.map(s=>`<option${s===def?' selected':''}>${s}</option>`).join('');
+}
+
+function renderGroup(cid, group){
+  const el=document.getElementById(cid); if(!el) return;
+  el.innerHTML='';
+  KOMP[group].forEach(item=>{
+    const bid=`kbox-${group}-${item.k}`;
+    const div=document.createElement('div');
+    div.className='komp-box';
+    div.innerHTML=`
+      <div class="komp-hd" onclick="toggleBox('${bid}','${group}','${item.k}')">
+        <div class="komp-hl">
+          <span class="komp-chevron" id="chev-${bid}">▾</span>
+          <span class="komp-name">${item.l}</span>
+          <span class="badge bgr" id="badge-${group}-${item.k}" style="font-size:10px">0 detail</span>
+        </div>
+        <span class="komp-total zero" id="ktot-${group}-${item.k}">Rp 0</span>
+      </div>
+      <div class="komp-body" id="${bid}">
+        <div class="dt-header">
+          <span class="dt-hlbl">No</span>
+          <span class="dt-hlbl">Keterangan</span>
+          <span class="dt-hlbl">QTY</span>
+          <span class="dt-hlbl">Satuan</span>
+          <span class="dt-hlbl">Harga Satuan (Rp)</span>
+          <span class="dt-hlbl">Total (Rp)</span>
+          <span class="dt-hlbl">Ket. Tambahan</span>
+          <span class="dt-hlbl">Berkas</span>
+          <span></span>
+        </div>
+        <div id="dtb-${group}-${item.k}"><div class="dt-empty">Belum ada detail — klik "+ Tambah" untuk menambahkan</div></div>
+        <div class="add-row" onclick="addRow('${group}','${item.k}','${item.s}')">+ Tambah Detail</div>
+      </div>`;
+    el.appendChild(div);
+  });
+}
+
+function toggleBox(bid, group, key){
+  const body=document.getElementById(bid);
+  const chev=document.getElementById('chev-'+bid);
+  if(!body) return;
+  const open=body.classList.contains('open');
+  body.classList.toggle('open',!open);
+  if(chev) chev.classList.toggle('open',!open);
+}
+
+/* ══════════════════════════════════════
+   ADD / RENDER / REMOVE DETAIL ROW
+══════════════════════════════════════ */
+function addRow(g, k, defSat){
+  if(!DS[g]) DS[g]={};
+  if(!DS[g][k]) DS[g][k]=[];
+  DS[g][k].push({ket:'',qty:'',sat:defSat,hs:'',ket2:'',hasFile:false,fileName:''});
+  renderRows(g,k,defSat);
+  // auto-open box
+  const bid=`kbox-${g}-${k}`;
+  const body=document.getElementById(bid);
+  if(body&&!body.classList.contains('open')){
+    body.classList.add('open');
+    const chev=document.getElementById('chev-'+bid);
+    if(chev)chev.classList.add('open');
+  }
+}
+
+function renderRows(g, k, defSat){
+  const container=document.getElementById(`dtb-${g}-${k}`); if(!container) return;
+  const rows=DS[g]?.[k]||[];
+  if(!rows.length){
+    container.innerHTML='<div class="dt-empty">Belum ada detail — klik "+ Tambah" untuk menambahkan</div>';
+    updateKompTot(g,k); return;
+  }
+  container.innerHTML=rows.map((r,i)=>`
+    <div class="dt-row" id="drow-${g}-${k}-${i}">
+      <div class="dt-no">${i+1}</div>
+      <input class="dt-inp" type="text" value="${escHtml(r.ket)}" placeholder="Keterangan..." onchange="upd('${g}','${k}',${i},'ket',this.value)">
+      <input class="dt-inp" type="number" min="0" value="${r.qty}" placeholder="0" style="text-align:right" oninput="upd('${g}','${k}',${i},'qty',this.value);calcRow('${g}','${k}',${i})">
+      <select class="dt-select" onchange="upd('${g}','${k}',${i},'sat',this.value)">${mkSatOpts(r.sat||defSat)}</select>
+      <input class="dt-inp" type="number" min="0" value="${r.hs}" placeholder="0" style="text-align:right;font-family:'DM Mono',monospace" oninput="upd('${g}','${k}',${i},'hs',this.value);calcRow('${g}','${k}',${i})">
+      <div class="dt-tot" id="rtot-${g}-${k}-${i}">${fmtRp((parseFloat(r.qty)||0)*(parseFloat(r.hs)||0))}</div>
+      <input class="dt-inp" type="text" value="${escHtml(r.ket2)}" placeholder="Keterangan tambahan..." onchange="upd('${g}','${k}',${i},'ket2',this.value)">
+      <label class="dt-file-btn" title="${r.hasFile?r.fileName:'Upload berkas'}">
+        ${r.hasFile?`✔ <span style="max-width:52px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px">${r.fileName}</span>`:'📎 Upload'}
+        <input type="file" accept=".pdf,.jpg,.png,.jpeg" style="display:none" onchange="updFile('${g}','${k}',${i},this)">
+      </label>
+      <button class="dt-del" onclick="delRow('${g}','${k}',${i})">✕</button>
+    </div>`).join('');
+  updateKompTot(g,k);
+}
+
+function escHtml(s){return(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+
+function upd(g,k,i,field,val){
+  if(DS[g]?.[k]?.[i]!==undefined) DS[g][k][i][field]=val;
+}
+function updFile(g,k,i,input){
+  if(!input.files.length)return;
+  DS[g][k][i].hasFile=true;
+  DS[g][k][i].fileName=input.files[0].name;
+  const item=KOMP[g].find(x=>x.k===k);
+  renderRows(g,k,item?.s||'Rupiah');
+}
+function calcRow(g,k,i){
+  const r=DS[g]?.[k]?.[i]; if(!r) return;
+  const tot=(parseFloat(r.qty)||0)*(parseFloat(r.hs)||0);
+  const el=document.getElementById(`rtot-${g}-${k}-${i}`);
+  if(el) el.textContent=fmtRp(tot);
+  updateKompTot(g,k);
+}
+function delRow(g,k,i){
+  DS[g][k].splice(i,1);
+  const item=KOMP[g].find(x=>x.k===k);
+  renderRows(g,k,item?.s||'Rupiah');
+}
+function updateKompTot(g,k){
+  const rows=DS[g]?.[k]||[];
+  const tot=rows.reduce((s,r)=>s+(parseFloat(r.qty)||0)*(parseFloat(r.hs)||0),0);
+  const el=document.getElementById(`ktot-${g}-${k}`);
+  if(el){el.textContent=fmtRp(tot);el.className='komp-total'+(tot===0?' zero':'');}
+  const badge=document.getElementById(`badge-${g}-${k}`);
+  if(badge) badge.textContent=rows.length+' detail';
   updateSummary();
 }
-function markFile(key){const f=document.getElementById('file-'+key);const t=document.getElementById('ftxt-'+key);if(f?.files?.length&&t){t.textContent='✔ '+f.files[0].name.slice(0,12);t.style.color='var(--green)';}}
-function fmtNum(n){return(!n||isNaN(n))?'0':Math.round(n).toLocaleString('id-ID');}
-function fmtRp(n){return'Rp '+fmtNum(n);}
-function getGT(g){return KOMPONEN[g].reduce((s,i)=>{const hs=parseFloat(document.getElementById('hs-'+i.key)?.value||0);const qty=parseFloat(document.getElementById('qty-'+i.key)?.value||0);return s+hs*qty;},0);}
+
+/* ══════════════════════════════════════
+   SUMMARY
+══════════════════════════════════════ */
+function getGrpTot(g){
+  return (KOMP[g]||[]).reduce((s,item)=>{
+    return s+(DS[g]?.[item.k]||[]).reduce((a,r)=>a+(parseFloat(r.qty)||0)*(parseFloat(r.hs)||0),0);
+  },0);
+}
 function updateSummary(){
-  const bp=BIAYA_GROUPS.reduce((s,g)=>s+getGT(g),0);
-  const ku=bp*.07,pd=PENDUKUNG_GROUPS.reduce((s,g)=>s+getGT(g),0),pp=PENDAPATAN_GROUPS.reduce((s,g)=>s+getGT(g),0);
-  document.getElementById('sum-biaya-pokok').textContent=fmtRp(bp);
-  document.getElementById('sum-keuntungan').textContent=fmtRp(ku);
-  document.getElementById('sum-pendukung').textContent=fmtRp(pd);
-  document.getElementById('sum-pendapatan').textContent=fmtRp(pp);
-  document.getElementById('sum-subsidi').textContent=fmtRp(bp+ku+pd-pp);
+  const bp=BG.reduce((s,g)=>s+getGrpTot(g),0);
+  const ku=bp*.07, pd=PG.reduce((s,g)=>s+getGrpTot(g),0), pp=PPG.reduce((s,g)=>s+getGrpTot(g),0);
+  setText('sum-bp',fmtRp(bp));setText('sum-ku',fmtRp(ku));
+  setText('sum-pd',fmtRp(pd));setText('sum-pp',fmtRp(pp));
+  setText('sum-sub',fmtRp(bp+ku+pd-pp));
+  // section labels
+  const bA=['inv','ops','monitor','pramudi','fasilitas','asuransi'].reduce((s,g)=>s+getGrpTot(g),0);
+  const bB=['pegawai','kelola'].reduce((s,g)=>s+getGrpTot(g),0);
+  setText('lbl-a',fmtRp(bA));setText('lbl-b',fmtRp(bB));
+  setText('lbl-c',fmtRp(pd));setText('lbl-d',fmtRp(pp));
 }
+function setText(id,v){const el=document.getElementById(id);if(el)el.textContent=v;}
+
+/* ══════════════════════════════════════
+   COLLECT FORM DATA
+══════════════════════════════════════ */
 function collectForm(){
-  const data={};
-  Object.keys(KOMPONEN).forEach(g=>{data[g]={};KOMPONEN[g].forEach(item=>{
-    const hs=parseFloat(document.getElementById('hs-'+item.key)?.value||0);
-    const qty=parseFloat(document.getElementById('qty-'+item.key)?.value||0);
-    data[g][item.key]={hs,qty,total:hs*qty,satuan:document.getElementById('sat-'+item.key)?.value||item.satuan,keterangan:document.getElementById('ket-'+item.key)?.value||'',label:item.label};
-  });});
-  return data;
+  const komp={};
+  Object.keys(KOMP).forEach(g=>{
+    komp[g]={};
+    KOMP[g].forEach(item=>{
+      const rows=DS[g]?.[item.k]||[];
+      const tot=rows.reduce((s,r)=>s+(parseFloat(r.qty)||0)*(parseFloat(r.hs)||0),0);
+      komp[g][item.k]={label:item.l,satuan:item.s,total:tot,details:rows.map(r=>({...r}))};
+    });
+  });
+  return komp;
 }
 
-// ====== CRUD ======
-function genNo(b,y){const ex=allData.filter(p=>p.tahun==y&&p.bulan==b).length;return`PVS/${y}/${String(b).padStart(2,'0')}/${(ex+1).toString().padStart(3,'0')}`;}
-
+/* ══════════════════════════════════════
+   SAVE PENGAJUAN
+══════════════════════════════════════ */
+function genNo(b,y){
+  const ex=allData.filter(p=>p.tahun==y&&p.bulan==b).length;
+  return`PVS/${y}/${String(b).padStart(2,'0')}/${(ex+1).toString().padStart(3,'0')}`;
+}
 async function savePengajuan(){
   const jenis=document.getElementById('f-jenis').value;
   const bulan=document.getElementById('f-bulan').value;
   const tahun=document.getElementById('f-tahun').value;
   if(!jenis||!bulan){toast('Jenis bus dan periode bulan wajib diisi!','error');return;}
-  const btn=document.getElementById('btn-simpan');btn.disabled=true;btn.textContent='⏳ Menyimpan...';
+  const btn=document.getElementById('btn-save');btn.disabled=true;btn.textContent='⏳ Menyimpan...';
   const kd=collectForm();
-  const bp=BIAYA_GROUPS.reduce((s,g)=>s+Object.values(kd[g]).reduce((a,v)=>a+v.total,0),0);
-  const ku=bp*.07,pd=PENDUKUNG_GROUPS.reduce((s,g)=>s+Object.values(kd[g]).reduce((a,v)=>a+v.total,0),0),pp=PENDAPATAN_GROUPS.reduce((s,g)=>s+Object.values(kd[g]).reduce((a,v)=>a+v.total,0),0);
-  const payload={id:Date.now().toString(),no:genNo(bulan,tahun),jenis,bulan:parseInt(bulan),tahun:parseInt(tahun),tgl:document.getElementById('f-tgl').value,pj:document.getElementById('f-pj').value,catatan:document.getElementById('f-catatan').value,komp_data:kd,biaya_pokok:bp,keuntungan:ku,pendukung:pd,pendapatan:pp,nilai_pengajuan:bp+ku+pd-pp,status:'Menunggu',nilai_disetujui:null,verif_detail:{},selisih_detail:[],catatan_verif:'',tgl_verif:null};
+  const bp=BG.reduce((s,g)=>s+Object.values(kd[g]).reduce((a,v)=>a+v.total,0),0);
+  const ku=bp*.07;
+  const pd=PG.reduce((s,g)=>s+Object.values(kd[g]).reduce((a,v)=>a+v.total,0),0);
+  const pp=PPG.reduce((s,g)=>s+Object.values(kd[g]).reduce((a,v)=>a+v.total,0),0);
+  const payload={
+    id:Date.now().toString(), no:genNo(bulan,tahun),
+    jenis, bulan:parseInt(bulan), tahun:parseInt(tahun),
+    tgl:document.getElementById('f-tgl').value,
+    pj:document.getElementById('f-pj').value,
+    catatan:document.getElementById('f-catatan').value,
+    komp_data:kd, biaya_pokok:bp, keuntungan:ku, pendukung:pd, pendapatan:pp,
+    nilai_pengajuan:bp+ku+pd-pp,
+    status:'Menunggu', nilai_disetujui:null, verif_detail:{}, selisih_detail:[],
+    catatan_verif:'', tgl_verif:null
+  };
   const{error}=await supa.from('pengajuan').insert(payload);
   btn.disabled=false;btn.textContent='💾 Simpan ke Supabase';
-  if(error){toast('Gagal menyimpan: '+error.message,'error');return;}
-  toast(`✅ Pengajuan ${payload.no} berhasil disimpan!`,'success');
-  allData=[payload,...allData]; resetForm(); showPage('daftar-pengajuan');
-}
-
-async function saveVerifikasi(status){
-  const p=allData.find(x=>x.id===currentVerifId);if(!p)return;
-  let total=0;const vd={},sel=[];
-  Object.keys(p.komp_data).forEach(g=>{vd[g]={};Object.keys(p.komp_data[g]).forEach(key=>{
-    const el=document.getElementById(`vv-${g}-${key}`);const ketEl=document.getElementById(`ketv-${g}-${key}`);
-    if(el){const val=parseFloat(el.value||0),ket=ketEl?.value||'',orig=p.komp_data[g][key].total,diff=val-orig;
-    total+=val;vd[g][key]={nilaiDisetujui:val,keteranganSelisih:ket};
-    if(Math.abs(diff)>0)sel.push({group:g,key,label:p.komp_data[g][key].label,satuan:p.komp_data[g][key].satuan,nilaiDiajukan:orig,nilaiDisetujui:val,selisih:diff,keterangan:ket});}
-  });});
-  const catatan=document.getElementById('vv-catatan')?.value||'';
-  const tglV=new Date().toISOString().split('T')[0];
-  const{error}=await supa.from('pengajuan').update({status,nilai_disetujui:total,verif_detail:vd,selisih_detail:sel,catatan_verif:catatan,tgl_verif:tglV}).eq('id',currentVerifId);
-  if(error){toast('Gagal menyimpan: '+error.message,'error');return;}
-  const idx=allData.findIndex(x=>x.id===currentVerifId);
-  if(idx>=0)allData[idx]={...allData[idx],status,nilai_disetujui:total,verif_detail:vd,selisih_detail:sel,catatan_verif:catatan,tgl_verif:tglV};
-  closeModal('modal-verif');updateStats();renderVfList();
-  toast(`✅ ${p.no} ${status==='Terverifikasi'?'disetujui':'ditandai Revisi'}!`,'success');
-}
-
-async function hapus(id){
-  if(!confirm('Hapus pengajuan ini? Data tidak dapat dikembalikan.'))return;
-  const{error}=await supa.from('pengajuan').delete().eq('id',id);
-  if(error){toast('Gagal hapus: '+error.message,'error');return;}
-  allData=allData.filter(p=>p.id!==id);updateStats();renderDaftar();
-  toast('Data berhasil dihapus','success');
+  if(error){toast('Gagal: '+error.message,'error');return;}
+  toast(`✅ ${payload.no} berhasil disimpan!`,'success');
+  allData=[payload,...allData];
+  resetForm();showPage('daftar-pengajuan');
 }
 
 function resetForm(){
   ['f-jenis','f-bulan'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   ['f-catatan','f-pj'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  Object.keys(KOMPONEN).forEach(g=>KOMPONEN[g].forEach(item=>{
-    ['hs-','qty-'].forEach(p=>{const el=document.getElementById(p+item.key);if(el)el.value='';});
-    const t=document.getElementById('tot-'+item.key);if(t)t.textContent='0';
-    const k=document.getElementById('ket-'+item.key);if(k)k.value='';
-    const ft=document.getElementById('ftxt-'+item.key);if(ft){ft.textContent='Unggah';ft.style.color='';}
-  }));
+  initDS();
+  const groupMap={
+    'comp-inv':'inv','comp-ops':'ops','comp-monitor':'monitor','comp-pramudi':'pramudi',
+    'comp-fasilitas':'fasilitas','comp-asuransi':'asuransi','comp-pegawai':'pegawai',
+    'comp-kelola':'kelola','comp-pendukung':'pendukung','comp-tiket':'tiket',
+    'comp-pendapatan-lain':'pendapatan_lain'
+  };
+  Object.entries(groupMap).forEach(([cid,g])=>renderGroup(cid,g));
   updateSummary();
 }
 
-// ====== RENDER LISTS ======
+/* ══════════════════════════════════════
+   PREVIEW SURAT & EXPORT PDF
+══════════════════════════════════════ */
+function previewSurat(){
+  const jenis=document.getElementById('f-jenis').value||'Bus Diesel';
+  const bulan=parseInt(document.getElementById('f-bulan').value||1);
+  const tahun=document.getElementById('f-tahun').value||'2026';
+  const tgl=document.getElementById('f-tgl').value||new Date().toISOString().split('T')[0];
+  const kd=collectForm();
+  const bp=BG.reduce((s,g)=>s+Object.values(kd[g]).reduce((a,v)=>a+v.total,0),0);
+  const ku=bp*.07, pd=PG.reduce((s,g)=>s+Object.values(kd[g]).reduce((a,v)=>a+v.total,0),0);
+  const pp=PPG.reduce((s,g)=>s+Object.values(kd[g]).reduce((a,v)=>a+v.total,0),0);
+  buildSuratModal({jenis,bulan,tahun,tgl,kd,bp,ku,pd,pp,subsidi:bp+ku+pd-pp,no:genNo(bulan,tahun)});
+}
+function suratFromRecord(id){
+  const p=allData.find(x=>x.id===id);if(!p)return;
+  buildSuratModal({jenis:p.jenis,bulan:p.bulan,tahun:p.tahun,tgl:p.tgl||'',kd:p.komp_data||{},bp:p.biaya_pokok,ku:p.keuntungan,pd:p.pendukung,pp:p.pendapatan,subsidi:p.nilai_pengajuan,no:p.no});
+}
+function buildSuratModal(d){
+  const biayaOps=d.bp+d.ku+d.pd;
+  const noSurat=`04.07.002/AMI/D.1/SUM/${d.tahun}`;
+  const tglStr=fmtTgl(d.tgl);
+  document.getElementById('modal-surat-body').innerHTML=`
+  <div id="surat-print-content" class="pdf-wrap">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px">
+      <div><div style="font-size:26px;font-weight:900;letter-spacing:-1px">PT AMI</div><div style="font-size:10px;color:#666;margin-top:1px">PT Anindya Mitra Internasional</div></div>
+      <div style="font-size:10px;text-align:right;color:#444;line-height:1.5">Jl. Janti KM 4, Gedongkuning<br>Banguntapan, Yogyakarta<br>Telp: (0274)451034-35 | Fax: (0274)451036</div>
+    </div>
+    <hr style="border:1px solid #222;margin-bottom:16px">
+    <table style="margin-bottom:16px;font-size:12px;border:none"><tr><td style="border:none;width:80px">Nomor</td><td style="border:none;width:10px">:</td><td style="border:none">${noSurat}</td></tr><tr><td style="border:none">Lamp</td><td style="border:none">:</td><td style="border:none">1 (satu) bendel</td></tr><tr><td style="border:none">Ha</td><td style="border:none">:</td><td style="border:none">Permohonan Pencairan Anggaran Belanja Subsidi Bulan ${namaBulan(d.bulan)} ${d.tahun}</td></tr></table>
+    <div style="margin-bottom:16px;font-size:12px">Kepada:<br>Yth. Kepala Dinas Perhubungan<br>Daerah Istimewa Yogyakarta<br>di Yogyakarta</div>
+    <p style="font-size:12px;margin-bottom:14px">Dengan hormat,</p>
+    <p style="font-size:12px;text-align:justify;text-indent:40px;margin-bottom:14px">Berdasarkan Peraturan Gubernur DIY Nomor 110 Tahun 2024 tentang Penyelenggaraan Sistem Angkutan Perkotaan Trans Jogja, kami mengajukan permohonan pencairan anggaran belanja subsidi bulan ${namaBulan(d.bulan)} ${d.tahun} sebesar <strong>${fmtRp(d.subsidi)}</strong> (<em>${terbilang(Math.round(d.subsidi))} Rupiah</em>) dengan perhitungan sebagai berikut:</p>
+    <table style="width:60%;margin:0 auto 18px;font-size:12px">
+      <tr><td style="border:1px solid #444;padding:5px 10px;width:24px;text-align:center">A.</td><td style="border:1px solid #444;padding:5px 10px">Biaya Operasional</td><td style="border:1px solid #444;padding:5px 10px;text-align:right;font-family:'Courier New'">${fmtRp(biayaOps)}</td></tr>
+      <tr><td style="border:1px solid #444;padding:5px 10px;text-align:center">B.</td><td style="border:1px solid #444;padding:5px 10px">Pendapatan Operasional</td><td style="border:1px solid #444;padding:5px 10px;text-align:right;font-family:'Courier New'">${fmtRp(d.pp)}</td></tr>
+      <tr><td style="border:1px solid #444;padding:5px 10px;text-align:center">C.</td><td style="border:1px solid #444;padding:5px 10px">Selisih Biaya dan Pendapatan Operasional</td><td style="border:1px solid #444;padding:5px 10px;text-align:right;font-family:'Courier New'"><strong>${fmtRp(d.subsidi)}</strong></td></tr>
+    </table>
+    <p style="font-size:12px;text-align:justify;margin-bottom:30px">Demikian permohonan ini kami sampaikan, atas perhatian dan terkabulnya permohonan ini, kami ucapkan terima kasih.</p>
+    <div style="display:flex;justify-content:flex-end;font-size:12px">
+      <div style="text-align:center;width:220px">
+        <p>Yogyakarta, ${tglStr}</p>
+        <p>PT Anindya Mitra Internasional,</p>
+        <div style="height:58px"></div>
+        <p style="font-weight:700">Priyatno Bambang Hernowo</p>
+        <p style="font-style:italic">Direktur Utama</p>
+      </div>
+    </div>
+    <hr style="border:0.5px solid #ccc;margin:24px 0 10px">
+    <p style="font-size:10px;color:#666;margin-bottom:22px">Tembusan: 1. Badan Pengelola Keuangan dan Aset DIY;</p>
+
+    <div style="page-break-before:always;padding-top:20px">
+      <h3 style="text-align:center;font-size:14px;margin-bottom:3px">BIAYA DAN PENDAPATAN OPERASIONAL TRANS JOGJA</h3>
+      <h3 style="text-align:center;font-size:12px;font-weight:400;margin-bottom:18px">${namaBulan(d.bulan).toUpperCase()} TAHUN ${d.tahun}</h3>
+      ${buildRincianHTML(d)}
+      <p style="font-size:11px;margin-top:10px"><strong>Terbilang:</strong> ${terbilang(Math.round(d.subsidi))} Rupiah</p>
+      <div style="display:flex;justify-content:flex-end;font-size:11px;margin-top:22px">
+        <div style="text-align:center;width:200px">
+          <p>Yogyakarta, ${tglStr}</p><p>PT Anindya Mitra Internasional</p>
+          <div style="height:50px"></div>
+          <p style="font-weight:700">Priyatno Bambang Hernowo</p>
+          <p style="font-style:italic">Direktur Utama</p>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  document.getElementById('modal-surat').classList.add('open');
+}
+
+function buildRincianHTML(d){
+  const rows=[];
+  const addRow=(indent,label,val)=>rows.push(`<tr><td style="border:1px solid #888;padding:4px 8px;padding-left:${indent}px">${label}</td><td style="border:1px solid #888;padding:4px 8px;text-align:right;font-family:'Courier New';white-space:nowrap">${val===null?'Rp –':fmtRp(val)}</td></tr>`);
+  const addHd=(label,val=null)=>rows.push(`<tr style="background:#f0f0f0"><td style="border:1px solid #666;padding:5px 8px;font-weight:700">${label}</td><td style="border:1px solid #666;padding:5px 8px;text-align:right;font-family:'Courier New';font-weight:700">${val===null?'':fmtRp(val)}</td></tr>`);
+
+  addHd('A. BIAYA POKOK');
+  addHd('A.1 Biaya Pokok PT Anindya Mitra Internasional');
+  addHd('A.1.1 Biaya Langsung');
+
+  const directGroups=[
+    {g:'inv',label:'1. Biaya Investasi dan Administrasi Kendaraan'},
+    {g:'ops',label:'2. Biaya Operasional dan Pemeliharaan'},
+    {g:'monitor',label:'3. Biaya Investasi Sistem Monitoring Keselamatan'},
+    {g:'pramudi',label:'4. Biaya Awak Kendaraan Pramudi'},
+    {g:'fasilitas',label:'5. Biaya Peningkatan Fasilitas Armada'},
+    {g:'asuransi',label:'6. Biaya Asuransi Penumpang'},
+  ];
+  directGroups.forEach(({g,label})=>{
+    if(!d.kd[g]) return;
+    rows.push(`<tr style="background:#fafafa"><td colspan="2" style="border:1px solid #aaa;padding:4px 8px;font-weight:600;font-size:11px;padding-left:16px">${label}</td></tr>`);
+    Object.keys(d.kd[g]).forEach(key=>{
+      const item=d.kd[g][key];
+      addRow(24, item.label, item.total||null);
+      // sub detail rows
+      if(item.details&&item.details.length){
+        item.details.forEach((r,i)=>{
+          const tot=(parseFloat(r.qty)||0)*(parseFloat(r.hs)||0);
+          rows.push(`<tr style="font-size:10px;color:#555"><td style="border:1px solid #ddd;padding:3px 8px;padding-left:36px">${i+1}. ${r.ket||'–'} (${fmtNum(r.qty)} ${r.sat} × ${fmtRp(r.hs)})</td><td style="border:1px solid #ddd;padding:3px 8px;text-align:right;font-family:'Courier New'">${fmtRp(tot)}</td></tr>`);
+        });
+      }
+    });
+  });
+
+  addHd('A.1.2 Biaya Tidak Langsung');
+  [{g:'pegawai',label:'1. Biaya Pegawai Kantor, Pool dan Bengkel'},{g:'kelola',label:'2. Biaya Pengelolaan'}].forEach(({g,label})=>{
+    if(!d.kd[g]) return;
+    rows.push(`<tr style="background:#fafafa"><td colspan="2" style="border:1px solid #aaa;padding:4px 8px;font-weight:600;font-size:11px;padding-left:16px">${label}</td></tr>`);
+    Object.keys(d.kd[g]).forEach(key=>{
+      const item=d.kd[g][key];
+      addRow(24, item.label, item.total||null);
+    });
+  });
+
+  rows.push(`<tr style="background:#dde0f5;font-weight:700"><td style="border:1px solid #555;padding:6px 8px">I. Jumlah Biaya Pokok PT Anindya Mitra Internasional</td><td style="border:1px solid #555;padding:6px 8px;text-align:right;font-family:'Courier New'">${fmtRp(d.bp)}</td></tr>`);
+  rows.push(`<tr style="background:#dde0f5;font-weight:700"><td style="border:1px solid #555;padding:5px 8px">II. Bagian Keuntungan PT. AMI (7% × I.)</td><td style="border:1px solid #555;padding:5px 8px;text-align:right;font-family:'Courier New'">${fmtRp(d.ku)}</td></tr>`);
+  rows.push(`<tr style="background:#ccd0ef;font-weight:700"><td style="border:1px solid #444;padding:5px 8px">III. Jumlah Biaya Pokok + Keuntungan (I + II)</td><td style="border:1px solid #444;padding:5px 8px;text-align:right;font-family:'Courier New'">${fmtRp(d.bp+d.ku)}</td></tr>`);
+
+  addHd('A.2 Biaya Pendukung');
+  if(d.kd['pendukung']){
+    let n=1;
+    Object.keys(d.kd['pendukung']).forEach(key=>{
+      const item=d.kd['pendukung'][key];
+      addRow(16,`${n++}. ${item.label}`,item.total||null);
+      if(item.details&&item.details.length){
+        item.details.forEach((r,i)=>{
+          const tot=(parseFloat(r.qty)||0)*(parseFloat(r.hs)||0);
+          rows.push(`<tr style="font-size:10px;color:#555"><td style="border:1px solid #ddd;padding:3px 8px;padding-left:28px">${i+1}. ${r.ket||'–'} (${fmtNum(r.qty)} ${r.sat} × ${fmtRp(r.hs)})</td><td style="border:1px solid #ddd;padding:3px 8px;text-align:right;font-family:'Courier New'">${fmtRp(tot)}</td></tr>`);
+        });
+      }
+    });
+  }
+  rows.push(`<tr style="background:#ccd0ef;font-weight:700"><td style="border:1px solid #444;padding:5px 8px">IV. Jumlah Biaya Pendukung</td><td style="border:1px solid #444;padding:5px 8px;text-align:right;font-family:'Courier New'">${fmtRp(d.pd)}</td></tr>`);
+  rows.push(`<tr style="background:#bbbde8;font-weight:700"><td style="border:1px solid #333;padding:6px 8px">V. Total Biaya Operasional (III + IV)</td><td style="border:1px solid #333;padding:6px 8px;text-align:right;font-family:'Courier New'">${fmtRp(d.bp+d.ku+d.pd)}</td></tr>`);
+
+  addHd('B. PENDAPATAN OPERASIONAL');
+  addRow(16,'1. Pendapatan Tiket',(d.kd['tiket']?.tiket_tunai?.total||0)+(d.kd['tiket']?.tiket_nontunai?.total||0));
+  addRow(16,'2. Pendapatan Lain-lain',(d.kd['pendapatan_lain']?.branding?.total||0)+(d.kd['pendapatan_lain']?.spare_part_bekas?.total||0));
+  rows.push(`<tr style="background:#c2f0d0;font-weight:700"><td style="border:1px solid #444;padding:5px 8px">VI. Jumlah Pendapatan Operasional</td><td style="border:1px solid #444;padding:5px 8px;text-align:right;font-family:'Courier New'">${fmtRp(d.pp)}</td></tr>`);
+  rows.push(`<tr style="background:#dde0f5;font-weight:800"><td style="border:2px solid #222;padding:7px 8px">C. SELISIH BIAYA DAN PENDAPATAN OPERASIONAL / SUBSIDI (V − VI)</td><td style="border:2px solid #222;padding:7px 8px;text-align:right;font-family:'Courier New';font-size:13px">${fmtRp(d.subsidi)}</td></tr>`);
+
+  return`<table style="width:100%;border-collapse:collapse;font-size:11px">${rows.join('')}</table>`;
+}
+
+function printSurat(){
+  const c=document.getElementById('surat-print-content');if(!c)return;
+  const w=window.open('','_blank','width=900,height=700');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Surat Permohonan Pencairan Subsidi</title><style>body{font-family:'Times New Roman',serif;font-size:12pt;margin:2cm;color:#000;line-height:1.6}table{border-collapse:collapse}@page{size:A4;margin:2cm}@media print{body{margin:0}}</style></head><body>${c.innerHTML}</body></html>`);
+  w.document.close();setTimeout(()=>{w.focus();w.print();},500);
+}
+
+/* ══════════════════════════════════════
+   VERIFIKASI
+══════════════════════════════════════ */
 function renderVfList(){
-  const b=document.getElementById('vf-bulan')?.value,t=document.getElementById('vf-tahun')?.value,s=document.getElementById('vf-status')?.value;
+  const b=document.getElementById('vf-bln')?.value, t=document.getElementById('vf-thn')?.value, s=document.getElementById('vf-st')?.value;
   let data=[...allData];
-  if(b)data=data.filter(p=>p.bulan==b);if(t)data=data.filter(p=>p.tahun==t);if(s)data=data.filter(p=>p.status===s);
-  const tb=document.getElementById('vf-list-body');if(!tb)return;
-  if(!data.length){tb.innerHTML='<tr><td colspan="9" class="text-center" style="padding:24px;color:var(--text3)">Tidak ada data</td></tr>';return;}
+  if(b) data=data.filter(p=>p.bulan==b);
+  if(t) data=data.filter(p=>p.tahun==t);
+  if(s) data=data.filter(p=>p.status===s);
+  const tb=document.getElementById('vf-tb');if(!tb)return;
+  if(!data.length){tb.innerHTML='<tr><td colspan="9" class="tce" style="padding:22px;color:var(--t3)">Tidak ada data</td></tr>';return;}
   tb.innerHTML=data.map(p=>{
     const sel=p.nilai_disetujui!==null?p.nilai_disetujui-p.nilai_pengajuan:null;
     const jS=(p.selisih_detail||[]).length;
     return`<tr>
-      <td class="td-mono">${p.no}</td>
-      <td><span class="badge ${p.jenis==='Bus Listrik'?'badge-green':'badge-purple'}">${p.jenis}</span></td>
+      <td class="tm">${p.no}</td>
+      <td><span class="badge ${p.jenis==='Bus Listrik'?'bg':'bp'}">${p.jenis}</span></td>
       <td>${namaBulan(p.bulan)} ${p.tahun}</td>
-      <td class="td-mono text-right">${fmtRp(p.nilai_pengajuan)}</td>
-      <td class="td-mono text-right">${p.nilai_disetujui!==null?fmtRp(p.nilai_disetujui):'–'}</td>
-      <td class="td-mono text-right" style="color:${sel===null?'inherit':sel<0?'var(--red)':'var(--green)'}">
+      <td class="tm tr">${fmtRp(p.nilai_pengajuan)}</td>
+      <td class="tm tr">${p.nilai_disetujui!==null?fmtRp(p.nilai_disetujui):'–'}</td>
+      <td class="tm tr" style="color:${sel===null?'inherit':sel<0?'var(--red)':'var(--green)'}">
         ${sel!==null?(sel>=0?'+':'')+fmtRp(Math.abs(sel)):'–'}</td>
-      <td class="text-center">${jS?`<span class="badge badge-orange">${jS}</span>`:'–'}</td>
+      <td class="tce">${jS?`<span class="badge bo">${jS}</span>`:'–'}</td>
       <td>${badgeSt(p.status)}</td>
-      <td><button class="btn btn-primary btn-sm" onclick="openVerifModal('${p.id}')">${p.status==='Menunggu'?'✅ Verifikasi':'👁 Detail'}</button></td>
+      <td><button class="btn btn-p btn-sm" onclick="openVerif('${p.id}')">${p.status==='Menunggu'?'✅ Verif':'👁 Detail'}</button></td>
     </tr>`;
   }).join('');
 }
 
-function openVerifModal(id){
-  currentVerifId=id;
+function openVerif(id){
+  curVerifId=id;
   const p=allData.find(x=>x.id===id);if(!p)return;
-  let html=`<div class="alert alert-warn">⚠️ Masukkan nilai yang disetujui per komponen. Isi <strong>Keterangan Selisih</strong> jika ada perbedaan.</div>`;
-  html+=`<div class="form-grid g3 mb-12" style="background:rgba(124,111,247,0.05);border:1px solid rgba(124,111,247,0.15);border-radius:12px;padding:12px">
-    <div><div class="form-label">No Pengajuan</div><div class="font-mono" style="font-weight:700">${p.no}</div></div>
-    <div><div class="form-label">Periode</div><div>${namaBulan(p.bulan)} ${p.tahun}</div></div>
-    <div><div class="form-label">Jenis Bus</div><div>${p.jenis}</div></div>
-  </div>`;
-  html+=`<div style="overflow-x:auto"><table class="verif-table"><thead><tr>
-    <th style="width:22%">Deskripsi</th><th style="width:9%">Satuan</th>
-    <th style="width:10%">Harga Satuan</th><th style="width:6%">QTY</th>
-    <th style="width:11%">Nilai Diajukan</th><th style="width:12%">Nilai Disetujui</th>
-    <th style="width:11%">Selisih</th><th style="width:19%">Keterangan Selisih</th>
+  let html=`<div class="fg g3" style="background:rgba(124,111,247,.05);border:1px solid rgba(124,111,247,.14);border-radius:10px;padding:12px;margin-bottom:14px">
+    <div><div class="fl">No Pengajuan</div><div style="font-family:'DM Mono',monospace;font-weight:700;font-size:13px">${p.no}</div></div>
+    <div><div class="fl">Periode</div><div>${namaBulan(p.bulan)} ${p.tahun}</div></div>
+    <div><div class="fl">Jenis Bus</div><div>${p.jenis}</div></div>
+  </div>
+  <div class="alert aw" style="margin-bottom:12px">⚠️ Masukkan nilai yang disetujui per komponen. Isi <strong>Keterangan Selisih</strong> jika ada perbedaan nilai.</div>`;
+
+  html+=`<div style="overflow-x:auto"><table class="vt"><thead><tr>
+    <th>Deskripsi Komponen</th><th>Satuan</th><th>Sub-Detail</th>
+    <th>Nilai Diajukan</th><th>Nilai Disetujui</th><th>Selisih</th><th>Keterangan Selisih</th>
   </tr></thead><tbody>`;
-  Object.keys(p.komp_data).forEach(group=>{
-    const anyF=Object.values(p.komp_data[group]).some(v=>v.total>0||v.hs>0);if(!anyF)return;
-    html+=`<tr class="verif-group-row"><td colspan="8">${GL[group]||group}</td></tr>`;
+
+  Object.keys(p.komp_data||{}).forEach(group=>{
+    const anyF=Object.values(p.komp_data[group]).some(v=>v.total>0||(v.details||[]).length>0);
+    if(!anyF) return;
+    html+=`<tr class="vgr"><td colspan="7">${GL[group]||group}</td></tr>`;
     Object.keys(p.komp_data[group]).forEach(key=>{
-      const item=p.komp_data[group][key];if(!item.hs&&!item.qty&&!item.total)return;
+      const item=p.komp_data[group][key];
+      if(!item.total&&!(item.details||[]).length) return;
       const eV=p.verif_detail?.[group]?.[key];
       const vVal=eV!=null?eV.nilaiDisetujui:item.total;
-      const vKet=eV?.keteranganSelisih||'';const sel=vVal-item.total;
+      const vKet=eV?.keteranganSelisih||'';
+      const sel=vVal-item.total;
+      const detailHtml=(item.details||[]).length>0
+        ?`<div style="font-size:10px;color:var(--t2)">${(item.details||[]).map((r,i)=>`${i+1}. ${r.ket} (${fmtNum(r.qty)} ${r.sat})`).join('<br>')}</div>`
+        :'–';
       html+=`<tr>
-        <td><div style="font-weight:600">${item.label}</div>${item.keterangan?`<div style="font-size:10px;color:var(--text3);font-style:italic">📝 ${item.keterangan}</div>`:''}</td>
-        <td class="text-center"><span class="badge badge-gray">${item.satuan}</span></td>
-        <td class="td-mono text-right">${fmtRp(item.hs)}</td>
-        <td class="text-center">${fmtNum(item.qty)}</td>
-        <td class="td-mono text-right">${fmtRp(item.total)}</td>
-        <td><input type="number" value="${vVal}" id="vv-${group}-${key}" oninput="recalcRow('${group}','${key}',${item.total})"></td>
-        <td class="td-mono text-right" id="sel-${group}-${key}" style="font-weight:700;color:${sel<0?'var(--red)':sel>0?'var(--green)':'var(--text3)'}">
+        <td style="font-weight:600">${item.label}</td>
+        <td class="tce"><span class="badge bgr" style="font-size:10px">${item.satuan||'–'}</span></td>
+        <td style="min-width:140px">${detailHtml}</td>
+        <td class="tm tr">${fmtRp(item.total)}</td>
+        <td><input type="number" value="${vVal}" id="vv-${group}-${key}" oninput="recalcVRow('${group}','${key}',${item.total})"></td>
+        <td class="tm tr" id="vsel-${group}-${key}" style="font-weight:700;color:${sel<0?'var(--red)':sel>0?'var(--green)':'var(--t3)'}">
           ${sel!==0?(sel>0?'+':'')+fmtRp(Math.abs(sel)):'–'}</td>
-        <td><textarea id="ketv-${group}-${key}" rows="1" placeholder="${sel!==0?'Wajib isi alasan..':'Opsional..'}" style="min-height:30px;resize:vertical;border-color:${sel!==0?'rgba(249,115,22,0.4)':'rgba(124,111,247,0.2)'}">${vKet}</textarea></td>
+        <td><textarea id="ketv-${group}-${key}" rows="1" placeholder="${sel!==0?'Wajib isi alasan...':'Opsional...'}" style="min-height:28px;resize:vertical;border-color:${sel!==0?'rgba(249,115,22,.4)':'rgba(124,111,247,.18)'}">${vKet}</textarea></td>
       </tr>`;
     });
   });
   html+=`</tbody></table></div>`;
-  html+=`<div class="two-col mt-12">
-    <div style="background:rgba(124,111,247,0.06);border:1px solid rgba(124,111,247,0.15);border-radius:12px;padding:14px">
-      <div style="font-weight:700;font-size:12px;color:var(--purple);margin-bottom:8px">📋 Nilai Diajukan</div>
-      <div class="sum-row"><span class="sum-lbl">Biaya Pokok</span><span class="sum-val">${fmtRp(p.biaya_pokok)}</span></div>
-      <div class="sum-row"><span class="sum-lbl">Keuntungan 7%</span><span class="sum-val">${fmtRp(p.keuntungan)}</span></div>
-      <div class="sum-row"><span class="sum-lbl">Biaya Pendukung</span><span class="sum-val">${fmtRp(p.pendukung)}</span></div>
-      <div class="sum-row"><span class="sum-lbl">Pendapatan</span><span class="sum-val">(${fmtRp(p.pendapatan)})</span></div>
-      <div class="sum-row"><span class="sum-lbl" style="color:var(--purple);font-weight:700">Subsidi Diajukan</span><span class="sum-val" style="color:var(--purple)">${fmtRp(p.nilai_pengajuan)}</span></div>
+  html+=`<div class="tc2" style="margin-top:14px">
+    <div style="background:rgba(124,111,247,.06);border:1px solid rgba(124,111,247,.14);border-radius:10px;padding:14px">
+      <div style="font-weight:700;font-size:12px;color:var(--p);margin-bottom:8px">📋 Nilai Diajukan</div>
+      <div class="sr"><span class="sl2">Biaya Pokok (A+B)</span><span class="sv2">${fmtRp(p.biaya_pokok)}</span></div>
+      <div class="sr"><span class="sl2">Keuntungan 7%</span><span class="sv2">${fmtRp(p.keuntungan)}</span></div>
+      <div class="sr"><span class="sl2">Biaya Pendukung (C)</span><span class="sv2">${fmtRp(p.pendukung)}</span></div>
+      <div class="sr"><span class="sl2">Pendapatan</span><span class="sv2">(${fmtRp(p.pendapatan)})</span></div>
+      <div class="sr"><span class="sl2" style="color:var(--p);font-weight:700">Subsidi Diajukan</span><span class="sv2" style="color:var(--p)">${fmtRp(p.nilai_pengajuan)}</span></div>
     </div>
-    <div style="background:rgba(249,115,22,0.05);border:1px solid rgba(249,115,22,0.2);border-radius:12px;padding:14px">
-      <div style="font-weight:700;font-size:12px;color:var(--accent);margin-bottom:8px">✅ Hasil Verifikasi</div>
-      <div class="sum-row"><span class="sum-lbl">Total Disetujui</span><span class="sum-val" id="vv-tot">–</span></div>
-      <div class="sum-row"><span class="sum-lbl">Selisih Total</span><span class="sum-val" id="vv-sel">–</span></div>
-      <div class="sum-row"><span class="sum-lbl">Komponen Selisih</span><span class="sum-val" id="vv-jml">–</span></div>
+    <div style="background:rgba(249,115,22,.05);border:1px solid rgba(249,115,22,.2);border-radius:10px;padding:14px">
+      <div style="font-weight:700;font-size:12px;color:var(--orange);margin-bottom:8px">✅ Hasil Verifikasi (Live)</div>
+      <div class="sr"><span class="sl2">Total Disetujui</span><span class="sv2" id="vv-tot">–</span></div>
+      <div class="sr"><span class="sl2">Selisih Total</span><span class="sv2" id="vv-sel">–</span></div>
+      <div class="sr"><span class="sl2">Komponen Selisih</span><span class="sv2" id="vv-jml">–</span></div>
     </div>
-  </div>`;
-  html+=`<div class="form-group mt-12"><label class="form-label">Catatan Umum Verifikator</label>
-    <textarea class="form-control" id="vv-catatan" rows="2" placeholder="Catatan hasil verifikasi...">${p.catatan_verif||''}</textarea></div>`;
+  </div>
+  <div class="fgr" style="margin-top:12px"><label class="fl">Catatan Umum Verifikator</label>
+    <textarea class="fc" id="vv-catatan" rows="2" placeholder="Catatan hasil verifikasi...">${p.catatan_verif||''}</textarea></div>`;
+
   document.getElementById('modal-verif-body').innerHTML=html;
   document.getElementById('modal-verif').classList.add('open');
-  recalcVerifTotal();
+  recalcVTotal();
 }
 
-function recalcRow(group,key,orig){
-  const el=document.getElementById(`vv-${group}-${key}`),selEl=document.getElementById(`sel-${group}-${key}`),ketEl=document.getElementById(`ketv-${group}-${key}`);
-  if(!el||!selEl)return;
-  const val=parseFloat(el.value||0),sel=val-parseFloat(orig);
+function recalcVRow(g,k,orig){
+  const el=document.getElementById(`vv-${g}-${k}`);
+  const selEl=document.getElementById(`vsel-${g}-${k}`);
+  const ketEl=document.getElementById(`ketv-${g}-${k}`);
+  if(!el||!selEl) return;
+  const val=parseFloat(el.value||0), sel=val-parseFloat(orig);
   selEl.textContent=sel!==0?(sel>0?'+':'')+fmtRp(Math.abs(sel)):'–';
-  selEl.style.color=sel<0?'var(--red)':sel>0?'var(--green)':'var(--text3)';
-  if(ketEl){ketEl.placeholder=sel!==0?'Wajib isi alasan selisih...':'Opsional...';ketEl.style.borderColor=sel!==0?'rgba(249,115,22,0.4)':'rgba(124,111,247,0.2)';}
-  recalcVerifTotal();
+  selEl.style.color=sel<0?'var(--red)':sel>0?'var(--green)':'var(--t3)';
+  if(ketEl){ketEl.placeholder=sel!==0?'Wajib isi alasan selisih...':'Opsional...';ketEl.style.borderColor=sel!==0?'rgba(249,115,22,.4)':'rgba(124,111,247,.18)';}
+  recalcVTotal();
 }
-function recalcVerifTotal(){
-  const p=allData.find(x=>x.id===currentVerifId);if(!p)return;
+function recalcVTotal(){
+  const p=allData.find(x=>x.id===curVerifId);if(!p)return;
   let total=0,jml=0;
-  Object.keys(p.komp_data).forEach(g=>Object.keys(p.komp_data[g]).forEach(key=>{
+  Object.keys(p.komp_data||{}).forEach(g=>Object.keys(p.komp_data[g]).forEach(key=>{
     const el=document.getElementById(`vv-${g}-${key}`);
-    if(el){const val=parseFloat(el.value||0);total+=val;if(Math.abs(val-p.komp_data[g][key].total)>0)jml++;}
+    if(el){const val=parseFloat(el.value||0);total+=val;if(Math.abs(val-(p.komp_data[g][key].total||0))>0)jml++;}
   }));
   const sel=total-p.nilai_pengajuan;
   const eT=document.getElementById('vv-tot');if(eT)eT.textContent=fmtRp(total);
   const eS=document.getElementById('vv-sel');if(eS){eS.textContent=(sel>=0?'+':'')+fmtRp(Math.abs(sel));eS.style.color=sel<0?'var(--red)':sel>0?'var(--green)':'inherit';eS.style.fontWeight='700';}
   const eJ=document.getElementById('vv-jml');if(eJ)eJ.textContent=jml+' komponen';
 }
+async function saveVerif(status){
+  const p=allData.find(x=>x.id===curVerifId);if(!p)return;
+  let total=0;const vd={},sel=[];
+  Object.keys(p.komp_data||{}).forEach(g=>{
+    vd[g]={};
+    Object.keys(p.komp_data[g]).forEach(key=>{
+      const el=document.getElementById(`vv-${g}-${key}`);
+      const ketEl=document.getElementById(`ketv-${g}-${key}`);
+      if(el){
+        const val=parseFloat(el.value||0),ket=ketEl?.value||'',orig=p.komp_data[g][key].total||0,diff=val-orig;
+        total+=val;vd[g][key]={nilaiDisetujui:val,keteranganSelisih:ket};
+        if(Math.abs(diff)>0)sel.push({group:g,key,label:p.komp_data[g][key].label,satuan:p.komp_data[g][key].satuan,nilaiDiajukan:orig,nilaiDisetujui:val,selisih:diff,keterangan:ket});
+      }
+    });
+  });
+  const catatan=document.getElementById('vv-catatan')?.value||'';
+  const tglV=new Date().toISOString().split('T')[0];
+  const{error}=await supa.from('pengajuan').update({status,nilai_disetujui:total,verif_detail:vd,selisih_detail:sel,catatan_verif:catatan,tgl_verif:tglV}).eq('id',curVerifId);
+  if(error){toast('Gagal: '+error.message,'error');return;}
+  const idx=allData.findIndex(x=>x.id===curVerifId);
+  if(idx>=0)allData[idx]={...allData[idx],status,nilai_disetujui:total,verif_detail:vd,selisih_detail:sel,catatan_verif:catatan,tgl_verif:tglV};
+  closeModal('modal-verif');updateStats();renderVfList();
+  toast(`✅ ${p.no} ${status==='Terverifikasi'?'disetujui':'ditandai Revisi'}!`,'success');
+}
 function closeModal(id){document.getElementById(id)?.classList.remove('open');}
 
+/* ══════════════════════════════════════
+   DAFTAR PENGAJUAN
+══════════════════════════════════════ */
 function renderDaftar(){
-  const b=document.getElementById('daf-bulan')?.value,t=document.getElementById('daf-tahun')?.value,s=document.getElementById('daf-status')?.value;
+  const b=document.getElementById('df-bln')?.value, t=document.getElementById('df-thn')?.value, s=document.getElementById('df-st')?.value;
   let data=[...allData];
-  if(b)data=data.filter(p=>p.bulan==b);if(t)data=data.filter(p=>p.tahun==t);if(s)data=data.filter(p=>p.status===s);
-  const tb=document.getElementById('daftar-body');if(!tb)return;
-  if(!data.length){tb.innerHTML='<tr><td colspan="10" class="text-center" style="padding:24px;color:var(--text3)">Tidak ada data</td></tr>';return;}
+  if(b) data=data.filter(p=>p.bulan==b);
+  if(t) data=data.filter(p=>p.tahun==t);
+  if(s) data=data.filter(p=>p.status===s);
+  const tb=document.getElementById('df-tb');if(!tb)return;
+  if(!data.length){tb.innerHTML='<tr><td colspan="10" class="tce" style="padding:22px;color:var(--t3)">Tidak ada data</td></tr>';return;}
   tb.innerHTML=data.map((p,i)=>{
     const sel=p.nilai_disetujui!==null?p.nilai_disetujui-p.nilai_pengajuan:null;
     return`<tr>
-      <td class="text-center" style="color:var(--text3);font-size:12px">${i+1}</td>
-      <td class="td-mono">${p.no}</td>
-      <td><span class="badge ${p.jenis==='Bus Listrik'?'badge-green':'badge-purple'}">${p.jenis}</span></td>
+      <td class="tce" style="color:var(--t3);font-size:11px">${i+1}</td>
+      <td class="tm">${p.no}</td>
+      <td><span class="badge ${p.jenis==='Bus Listrik'?'bg':'bp'}">${p.jenis}</span></td>
       <td>${namaBulan(p.bulan)} ${p.tahun}</td>
       <td style="font-size:12px">${p.pj||'–'}</td>
-      <td class="td-mono text-right">${fmtRp(p.nilai_pengajuan)}</td>
-      <td class="td-mono text-right">${p.nilai_disetujui!==null?fmtRp(p.nilai_disetujui):'–'}</td>
-      <td class="td-mono text-right" style="font-weight:700;color:${sel===null?'inherit':sel<0?'var(--red)':'var(--green)'}">
+      <td class="tm tr">${fmtRp(p.nilai_pengajuan)}</td>
+      <td class="tm tr">${p.nilai_disetujui!==null?fmtRp(p.nilai_disetujui):'–'}</td>
+      <td class="tm tr" style="font-weight:700;color:${sel===null?'inherit':sel<0?'var(--red)':'var(--green)'}">
         ${sel!==null?(sel>=0?'+':'')+fmtRp(Math.abs(sel)):'–'}</td>
       <td>${badgeSt(p.status)}</td>
-      <td style="display:flex;gap:4px">
-        <button class="btn btn-primary btn-sm" onclick="openVerifModal('${p.id}')">👁</button>
-        <button class="btn btn-danger btn-sm" onclick="hapus('${p.id}')">🗑</button>
+      <td style="display:flex;gap:4px;flex-wrap:nowrap">
+        <button class="btn btn-p btn-sm" onclick="openVerif('${p.id}')">✅</button>
+        <button class="btn btn-g btn-sm" onclick="suratFromRecord('${p.id}')">📄</button>
+        <button class="btn btn-d btn-sm" onclick="hapus('${p.id}')">🗑</button>
       </td>
     </tr>`;
   }).join('');
 }
+async function hapus(id){
+  if(!confirm('Hapus pengajuan ini? Data tidak dapat dikembalikan.'))return;
+  const{error}=await supa.from('pengajuan').delete().eq('id',id);
+  if(error){toast('Gagal hapus','error');return;}
+  allData=allData.filter(p=>p.id!==id);updateStats();renderDaftar();
+  toast('Data dihapus','success');
+}
 
-// ====== LAPORAN ======
+/* ══════════════════════════════════════
+   LAPORAN
+══════════════════════════════════════ */
 const BLN=['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
 function namaBulan(n){return BLN[n]||'–';}
-function filterD(bArr,t){return allData.filter(p=>bArr.includes(p.bulan)&&p.tahun==t);}
+function flt(bArr,t){return allData.filter(p=>bArr.includes(p.bulan)&&p.tahun==t);}
 
 function buildLapTable(data,title){
-  if(!data.length)return`<div class="gcard"><div class="gcard-body text-center" style="padding:40px;color:var(--text3)">📂 Tidak ada data pada periode ini</div></div>`;
+  if(!data.length)return`<div class="gc"><div class="gcb tce" style="padding:40px;color:var(--t3)">📂 Tidak ada data pada periode ini</div></div>`;
   const totP=data.reduce((s,p)=>s+p.nilai_pengajuan,0);
-  const vData=data.filter(p=>p.nilai_disetujui!==null);
-  const totD=vData.reduce((s,p)=>s+p.nilai_disetujui,0);
+  const vD=data.filter(p=>p.nilai_disetujui!==null);
+  const totD=vD.reduce((s,p)=>s+p.nilai_disetujui,0);
   const allSel=data.flatMap(p=>(p.selisih_detail||[]).map(s=>({...s,no:p.no,periode:namaBulan(p.bulan)+' '+p.tahun})));
-  let html=`<div class="gcard mb-12">
-    <div class="gcard-header" style="background:linear-gradient(135deg,var(--purple),var(--blue))">
-      <span style="color:#fff">📋</span><div class="gcard-title" style="color:#fff">${title}</div>
-    </div>
+  let html=`<div class="gc" style="margin-bottom:14px">
+    <div class="gch" style="background:linear-gradient(135deg,var(--p),var(--bl))"><span style="font-size:16px;color:#fff">📋</span><div class="gct" style="color:#fff">${title}</div></div>
     <div style="overflow-x:auto"><table>
-      <thead><tr><th>No Pengajuan</th><th>Jenis</th><th>Periode</th><th>PJ</th><th>Tgl Verif</th><th>Nilai Diajukan</th><th>Nilai Disetujui</th><th>Selisih</th><th>Komp.</th><th>Status</th></tr></thead>
+      <thead><tr><th>No Pengajuan</th><th>Jenis</th><th>Periode</th><th>PJ</th><th>Tgl Verif</th><th>Nilai Diajukan</th><th>Nilai Disetujui</th><th>Selisih</th><th>Komp.</th><th>Status</th><th>Aksi</th></tr></thead>
       <tbody>${data.map(p=>{
         const sel=p.nilai_disetujui!==null?p.nilai_disetujui-p.nilai_pengajuan:null;
         const jS=(p.selisih_detail||[]).length;
         return`<tr>
-          <td class="td-mono">${p.no}</td>
-          <td><span class="badge ${p.jenis==='Bus Listrik'?'badge-green':'badge-purple'}">${p.jenis}</span></td>
+          <td class="tm">${p.no}</td>
+          <td><span class="badge ${p.jenis==='Bus Listrik'?'bg':'bp'}">${p.jenis}</span></td>
           <td>${namaBulan(p.bulan)} ${p.tahun}</td>
           <td style="font-size:12px">${p.pj||'–'}</td>
           <td style="font-size:12px">${p.tgl_verif||'–'}</td>
-          <td class="td-mono text-right">${fmtRp(p.nilai_pengajuan)}</td>
-          <td class="td-mono text-right">${p.nilai_disetujui!==null?fmtRp(p.nilai_disetujui):'–'}</td>
-          <td class="td-mono text-right" style="font-weight:700;color:${sel===null?'inherit':sel<0?'var(--red)':'var(--green)'}">
+          <td class="tm tr">${fmtRp(p.nilai_pengajuan)}</td>
+          <td class="tm tr">${p.nilai_disetujui!==null?fmtRp(p.nilai_disetujui):'–'}</td>
+          <td class="tm tr" style="font-weight:700;color:${sel===null?'inherit':sel<0?'var(--red)':'var(--green)'}">
             ${sel!==null?(sel>=0?'+':'')+fmtRp(Math.abs(sel)):'–'}</td>
-          <td class="text-center">${jS?`<span class="badge badge-orange">${jS}</span>`:'–'}</td>
+          <td class="tce">${jS?`<span class="badge bo">${jS}</span>`:'–'}</td>
           <td>${badgeSt(p.status)}</td>
+          <td><button class="btn btn-g btn-sm" onclick="suratFromRecord('${p.id}')">📄 Surat</button></td>
         </tr>`;
       }).join('')}</tbody>
-      <tfoot><tr style="font-weight:700;background:rgba(124,111,247,0.05)">
-        <td colspan="5" style="padding:10px 14px">TOTAL (${data.length} pengajuan)</td>
-        <td class="td-mono text-right">${fmtRp(totP)}</td>
-        <td class="td-mono text-right">${vData.length?fmtRp(totD):'–'}</td>
-        <td class="td-mono text-right" style="color:${(totD-totP)<0?'var(--red)':'var(--green)'}">
-          ${vData.length?(totD-totP>=0?'+':'')+fmtRp(Math.abs(totD-totP)):'–'}</td>
-        <td></td><td></td>
+      <tfoot><tr style="font-weight:700;background:rgba(124,111,247,.05)">
+        <td colspan="5" style="padding:9px 11px">TOTAL (${data.length} pengajuan)</td>
+        <td class="tm tr">${fmtRp(totP)}</td>
+        <td class="tm tr">${vD.length?fmtRp(totD):'–'}</td>
+        <td class="tm tr" style="color:${(totD-totP)<0?'var(--red)':'var(--green)'}">
+          ${vD.length?(totD-totP>=0?'+':'')+fmtRp(Math.abs(totD-totP)):'–'}</td>
+        <td></td><td></td><td></td>
       </tr></tfoot>
     </table></div></div>`;
   if(allSel.length){
-    html+=`<div class="gcard">
-      <div class="gcard-header" style="background:rgba(249,115,22,0.08);border-top:3px solid var(--accent)">
-        <span>⚠️</span><div class="gcard-title" style="color:var(--accent)">Rincian Selisih Komponen (${allSel.length} item)</div>
-      </div>
+    html+=`<div class="gc">
+      <div class="gch" style="background:rgba(249,115,22,.08);border-top:3px solid var(--orange)"><span>⚠️</span><div class="gct" style="color:var(--orange)">Rincian Selisih Komponen (${allSel.length} item)</div></div>
       <div style="overflow-x:auto"><table>
-        <thead><tr><th>No Pengajuan</th><th>Periode</th><th>Komponen</th><th>Satuan</th><th>Nilai Diajukan</th><th>Nilai Disetujui</th><th>Selisih</th><th>Keterangan Selisih</th></tr></thead>
+        <thead><tr><th>No</th><th>Periode</th><th>Komponen</th><th>Satuan</th><th>Diajukan</th><th>Disetujui</th><th>Selisih</th><th>Keterangan Selisih</th></tr></thead>
         <tbody>${allSel.map(s=>`<tr>
-          <td class="td-mono">${s.no}</td><td style="font-size:12px">${s.periode}</td>
+          <td class="tm">${s.no}</td><td style="font-size:12px">${s.periode}</td>
           <td style="font-weight:600;font-size:12px">${s.label}</td>
-          <td><span class="badge badge-gray">${s.satuan||'–'}</span></td>
-          <td class="td-mono text-right">${fmtRp(s.nilaiDiajukan)}</td>
-          <td class="td-mono text-right">${fmtRp(s.nilaiDisetujui)}</td>
-          <td class="td-mono text-right" style="font-weight:700;color:${s.selisih<0?'var(--red)':'var(--green)'}">
+          <td><span class="badge bgr" style="font-size:10px">${s.satuan||'–'}</span></td>
+          <td class="tm tr">${fmtRp(s.nilaiDiajukan)}</td>
+          <td class="tm tr">${fmtRp(s.nilaiDisetujui)}</td>
+          <td class="tm tr" style="font-weight:700;color:${s.selisih<0?'var(--red)':'var(--green)'}">
             ${s.selisih>=0?'+':''} ${fmtRp(Math.abs(s.selisih))}</td>
-          <td style="font-size:12px;color:var(--text2);font-style:${s.keterangan?'normal':'italic'}">${s.keterangan||'–'}</td>
+          <td style="font-size:12px;color:var(--t2);font-style:${s.keterangan?'normal':'italic'}">${s.keterangan||'–'}</td>
         </tr>`).join('')}</tbody>
       </table></div></div>`;
   }
   return html;
 }
 
-function renderLapBulanan(){const b=parseInt(document.getElementById('lb-bulan')?.value||new Date().getMonth()+1);const t=document.getElementById('lb-tahun')?.value||2025;document.getElementById('lap-bulanan-content').innerHTML=buildLapTable(filterD([b],t),`Laporan Bulanan – ${namaBulan(b)} ${t}`);}
-function renderLapTriwulan(){const q=parseInt(document.getElementById('ltw-q')?.value||1);const t=document.getElementById('ltw-tahun')?.value||2025;const bm={1:[1,2,3],2:[4,5,6],3:[7,8,9],4:[10,11,12]};const lb=['Jan–Mar','Apr–Jun','Jul–Sep','Okt–Des'][q-1];document.getElementById('lap-triwulan-content').innerHTML=buildLapTable(filterD(bm[q],t),`Laporan Triwulan ${q} (${lb}) ${t}`);}
-function renderLapSemester(){const s=parseInt(document.getElementById('ls-sem')?.value||1);const t=document.getElementById('ls-tahun')?.value||2025;document.getElementById('lap-semester-content').innerHTML=buildLapTable(filterD(s===1?[1,2,3,4,5,6]:[7,8,9,10,11,12],t),`Laporan Semester ${s} (${s===1?'Januari–Juni':'Juli–Desember'}) ${t}`);}
-function renderLapTahunan(){const t=document.getElementById('lta-tahun')?.value||2025;document.getElementById('lap-tahunan-content').innerHTML=buildLapTable(filterD([1,2,3,4,5,6,7,8,9,10,11,12],t),`Laporan Tahunan ${t}`);}
+function renderLapBulanan(){const b=parseInt(document.getElementById('lb-bln')?.value||new Date().getMonth()+1);const t=document.getElementById('lb-thn')?.value||2026;document.getElementById('lap-bln').innerHTML=buildLapTable(flt([b],t),`Laporan Bulanan – ${namaBulan(b)} ${t}`);}
+function renderLapTriwulan(){const q=parseInt(document.getElementById('lq-q')?.value||1);const t=document.getElementById('lq-thn')?.value||2026;const bm={1:[1,2,3],2:[4,5,6],3:[7,8,9],4:[10,11,12]};document.getElementById('lap-twl').innerHTML=buildLapTable(flt(bm[q],t),`Laporan Triwulan ${q} ${t}`);}
+function renderLapSemester(){const s=parseInt(document.getElementById('ls-s')?.value||1);const t=document.getElementById('ls-thn')?.value||2026;document.getElementById('lap-sem').innerHTML=buildLapTable(flt(s===1?[1,2,3,4,5,6]:[7,8,9,10,11,12],t),`Laporan Semester ${s} ${t}`);}
+function renderLapTahunan(){const t=document.getElementById('la-thn')?.value||2026;document.getElementById('lap-thn').innerHTML=buildLapTable(flt([1,2,3,4,5,6,7,8,9,10,11,12],t),`Laporan Tahunan ${t}`);}
 
-// ====== STATS ======
+/* ══════════════════════════════════════
+   STATS & DASHBOARD
+══════════════════════════════════════ */
 function updateStats(){
-  document.getElementById('stat-total').textContent=allData.length;
-  document.getElementById('stat-pending').textContent=allData.filter(p=>p.status==='Menunggu').length;
-  document.getElementById('stat-verified').textContent=allData.filter(p=>p.status==='Terverifikasi').length;
-  document.getElementById('stat-revisi').textContent=allData.filter(p=>p.status==='Revisi').length;
-  const tb=document.getElementById('dash-recent-body'),rc=[...allData].slice(0,6);
-  if(tb){if(!rc.length){tb.innerHTML='<tr><td colspan="4" class="text-center" style="padding:24px;color:var(--text3)">Belum ada data</td></tr>';}
-    else tb.innerHTML=rc.map(p=>`<tr><td class="td-mono" style="font-size:11px">${p.no}</td><td style="font-size:12px">${namaBulan(p.bulan)} ${p.tahun}</td><td>${badgeSt(p.status)}</td><td class="td-mono text-right">${fmtRp(p.nilai_pengajuan)}</td></tr>`).join('');}
+  setText('st0',allData.length);
+  setText('st1',allData.filter(p=>p.status==='Menunggu').length);
+  setText('st2',allData.filter(p=>p.status==='Terverifikasi').length);
+  setText('st3',allData.filter(p=>p.status==='Revisi').length);
+  const tb=document.getElementById('dash-tb'), rc=[...allData].slice(0,6);
+  if(tb){
+    if(!rc.length){tb.innerHTML='<tr><td colspan="4" class="tce" style="padding:22px;color:var(--t3)">Belum ada data</td></tr>';}
+    else tb.innerHTML=rc.map(p=>`<tr><td class="tm" style="font-size:11px">${p.no}</td><td style="font-size:12px">${namaBulan(p.bulan)} ${p.tahun}</td><td>${badgeSt(p.status)}</td><td class="tm tr">${fmtRp(p.nilai_pengajuan)}</td></tr>`).join('');
+  }
   const ce=document.getElementById('dash-chart');
   if(ce&&allData.length){
     const bm={};allData.forEach(p=>{const k=`${p.tahun}-${String(p.bulan).padStart(2,'0')}`;bm[k]=(bm[k]||0)+p.nilai_pengajuan;});
     const keys=Object.keys(bm).sort().slice(-8);const mx=Math.max(...keys.map(k=>bm[k]),1);
-    ce.innerHTML=keys.map(k=>{const[,mo]=k.split('-');const h=Math.max(4,Math.round((bm[k]/mx)*140));
-    return`<div class="chart-bar-col">
-      <div class="chart-bar-val">${(bm[k]/1e6).toFixed(1)}M</div>
-      <div class="chart-bar" style="height:${h}px"></div>
-      <div class="chart-bar-label">${namaBulan(parseInt(mo)).slice(0,3)}</div>
-    </div>`;}).join('');
-  } else if(ce) ce.innerHTML='<div style="text-align:center;width:100%;color:var(--text3);font-size:13px;padding:20px">Belum ada data</div>';
+    ce.innerHTML=keys.map(k=>{const[,mo]=k.split('-');const h=Math.max(4,Math.round((bm[k]/mx)*120));
+    return`<div class="cbc"><div class="cbv">${(bm[k]/1e6).toFixed(1)}M</div><div class="cbar" style="height:${h}px"></div><div class="cbl">${namaBulan(parseInt(mo)).slice(0,3)}</div></div>`;}).join('');
+  } else if(ce) ce.innerHTML='<div style="text-align:center;width:100%;color:var(--t3);font-size:12px;padding:20px">Belum ada data</div>';
+}
+function badgeSt(s){return({'Menunggu':'<span class="badge bo"><span class="sdot do"></span>Menunggu</span>','Terverifikasi':'<span class="badge bg"><span class="sdot dg"></span>Terverifikasi</span>','Revisi':'<span class="badge br"><span class="sdot dr"></span>Revisi</span>'}[s])||`<span class="badge bgr">${s}</span>`;}
+
+/* ══════════════════════════════════════
+   HELPERS
+══════════════════════════════════════ */
+function fmtNum(n){return(!n||isNaN(n))?'0':Math.round(n).toLocaleString('id-ID');}
+function fmtRp(n){return'Rp '+fmtNum(n);}
+function fmtTgl(iso){
+  if(!iso)return'–';
+  try{const d=new Date(iso);return`${d.getDate().toString().padStart(2,'0')} ${BLN[d.getMonth()+1]} ${d.getFullYear()}`;}catch(e){return iso;}
+}
+function terbilang(n){
+  if(!n||n===0)return'Nol';
+  const sat=['','Satu','Dua','Tiga','Empat','Lima','Enam','Tujuh','Delapan','Sembilan','Sepuluh','Sebelas'];
+  if(n<12)return sat[n];
+  if(n<20)return sat[n-10]+' Belas';
+  if(n<100)return sat[Math.floor(n/10)]+' Puluh'+(n%10?' '+sat[n%10]:'');
+  if(n<200)return'Seratus'+(n>100?' '+terbilang(n-100):'');
+  if(n<1000)return sat[Math.floor(n/100)]+' Ratus'+(n%100?' '+terbilang(n%100):'');
+  if(n<2000)return'Seribu'+(n>1000?' '+terbilang(n-1000):'');
+  if(n<1e6)return terbilang(Math.floor(n/1000))+' Ribu'+(n%1000?' '+terbilang(n%1000):'');
+  if(n<1e9)return terbilang(Math.floor(n/1e6))+' Juta'+(n%1e6?' '+terbilang(n%1e6):'');
+  if(n<1e12)return terbilang(Math.floor(n/1e9))+' Milyar'+(n%1e9?' '+terbilang(n%1e9):'');
+  return n.toString();
 }
 
-function badgeSt(s){return({'Menunggu':'<span class="badge badge-orange"><span class="status-dot dot-orange" style="margin-right:4px"></span>Menunggu</span>','Terverifikasi':'<span class="badge badge-green"><span class="status-dot dot-green" style="margin-right:4px"></span>Terverifikasi</span>','Revisi':'<span class="badge badge-red"><span class="status-dot" style="background:var(--red);margin-right:4px"></span>Revisi</span>'}[s])||`<span class="badge badge-gray">${s}</span>`;}
-
-// ====== PAGE TITLES ======
-const PAGE_META={
-  'dashboard':['Selamat Datang 👋','Sistem Verifikasi Subsidi TransJogja – PT AMI'],
-  'input-pengajuan':['Input Pengajuan 📝','Ajukan verifikasi subsidi untuk periode tertentu'],
+/* ══════════════════════════════════════
+   NAVIGATION
+══════════════════════════════════════ */
+const PM={
+  'dashboard':['Dashboard 📊','Sistem Verifikasi Subsidi TransJogja – PT AMI'],
+  'input-pengajuan':['Input Pengajuan 📝','Ajukan verifikasi subsidi periode tertentu'],
   'hasil-verifikasi':['Hasil Verifikasi ✅','Verifikasi komponen pengajuan subsidi'],
   'daftar-pengajuan':['Daftar Pengajuan 📋','Semua pengajuan verifikasi subsidi'],
-  'laporan-bulanan':['Laporan Bulanan 📅','Ringkasan verifikasi per bulan'],
+  'laporan-bulanan':['Laporan Bulanan 📅','Ringkasan per bulan'],
   'laporan-triwulan':['Laporan Triwulan 📆','Rekapitulasi per triwulan'],
   'laporan-semester':['Laporan Semester 🗓️','Rekapitulasi per semester'],
-  'laporan-tahunan':['Laporan Tahunan 📁','Rekapitulasi satu tahun penuh'],
+  'laporan-tahunan':['Laporan Tahunan 📁','Rekapitulasi satu tahun'],
 };
-
-// ====== NAV ======
+let curPage='dashboard';
 function showPage(id){
   document.querySelectorAll('.page').forEach(p=>{p.classList.remove('active');p.style.display='none';});
-  document.querySelectorAll('.nav-btn').forEach(n=>n.classList.remove('active'));
-  const pg=document.getElementById('page-'+id);if(pg){pg.classList.add('active');pg.style.display='block';}
+  document.querySelectorAll('.sn').forEach(n=>n.classList.remove('active'));
+  const pg=document.getElementById('page-'+id);
+  if(pg){pg.classList.add('active');pg.style.display='block';}
   const nb=document.getElementById('nav-'+id);if(nb)nb.classList.add('active');
-  const meta=PAGE_META[id]||['SIMVERI',''];
-  const tt=document.getElementById('topbar-title'),ts=document.getElementById('topbar-sub');
-  if(tt)tt.textContent=meta[0];if(ts)ts.textContent=meta[1];
+  const m=PM[id]||['SIMVERI',''];
+  setText('tb-title',m[0]);setText('tb-sub',m[1]);
+  curPage=id;
   if(id==='dashboard')updateStats();
   if(id==='hasil-verifikasi')renderVfList();
   if(id==='daftar-pengajuan')renderDaftar();
@@ -1224,26 +1269,40 @@ function showPage(id){
   if(id==='laporan-semester')renderLapSemester();
   if(id==='laporan-tahunan')renderLapTahunan();
 }
+function renderCurrentPage(){
+  if(curPage==='dashboard')updateStats();
+  else if(curPage==='hasil-verifikasi')renderVfList();
+  else if(curPage==='daftar-pengajuan')renderDaftar();
+}
 
-// ====== INIT ======
+/* ══════════════════════════════════════
+   INIT
+══════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded',async()=>{
+  initDS();
+  // set defaults
   const now=new Date();
   const tg=document.getElementById('f-tgl');if(tg)tg.value=now.toISOString().split('T')[0];
-  const lb=document.getElementById('lb-bulan');if(lb)lb.value=now.getMonth()+1;
-  ['inv','ops','monitor','pramudi','fasilitas','asuransi'].forEach(g=>renderCompRows('comp-'+g,g));
-  ['pegawai','kelola'].forEach(g=>renderCompRows('comp-'+g,g));
-  renderCompRows('comp-pendukung','pendukung');
-  renderCompRows('comp-tiket','tiket');
-  renderCompRows('comp-pendapatan-lain','pendapatan_lain');
+  const lb=document.getElementById('lb-bln');if(lb)lb.value=now.getMonth()+1;
 
-  const dot=document.getElementById('conn-dot'),txt=document.getElementById('conn-text');
+  // render all komponen groups
+  const groupMap={
+    'comp-inv':'inv','comp-ops':'ops','comp-monitor':'monitor','comp-pramudi':'pramudi',
+    'comp-fasilitas':'fasilitas','comp-asuransi':'asuransi','comp-pegawai':'pegawai',
+    'comp-kelola':'kelola','comp-pendukung':'pendukung','comp-tiket':'tiket',
+    'comp-pendapatan-lain':'pendapatan_lain'
+  };
+  Object.entries(groupMap).forEach(([cid,g])=>renderGroup(cid,g));
+
+  // connect supabase
+  const dot=document.getElementById('cdot'),txt=document.getElementById('ctxt');
   try{
     allData=await fetchAll();
-    dot.className='conn-dot ok';txt.textContent='Terhubung';txt.style.color='var(--green)';
+    dot.className='cdot ok';txt.textContent='Terhubung ke Supabase';txt.style.color='var(--green)';
     updateStats();
   }catch(e){
-    dot.className='conn-dot err';txt.textContent='Gagal terhubung';txt.style.color='var(--red)';
-    toast('Gagal terhubung ke Supabase','error');
+    dot.className='cdot err';txt.textContent='Gagal terhubung';txt.style.color='var(--red)';
+    toast('Gagal terhubung ke Supabase: '+e.message,'error');
   }
   document.getElementById('app-loading').style.display='none';
   showPage('dashboard');
