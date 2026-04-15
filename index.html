@@ -226,6 +226,7 @@ tbody tr:hover{background:rgba(255,255,255,.46)}
   <button class="sn" id="nav-laporan-triwulan" onclick="showPage('laporan-triwulan')"><span>📆</span><div class="tip">Lap. Triwulan</div></button>
   <button class="sn" id="nav-laporan-semester" onclick="showPage('laporan-semester')"><span>🗓️</span><div class="tip">Lap. Semester</div></button>
   <button class="sn" id="nav-laporan-tahunan" onclick="showPage('laporan-tahunan')"><span>📁</span><div class="tip">Lap. Tahunan</div></button>
+  <button class="sn" id="nav-rekap-komponen" onclick="showPage('rekap-komponen')"><span>📈</span><div class="tip">Rekap Komponen</div></button>
 </nav>
 
 <div class="main">
@@ -440,6 +441,33 @@ tbody tr:hover{background:rgba(255,255,255,.46)}
       <button class="btn btn-g" onclick="window.print()">🖨️ Cetak</button>
     </div>
     <div id="lap-thn"></div>
+  </div>
+
+  <!-- ═══ REKAP KOMPONEN ═══ -->
+  <div id="page-rekap-komponen" class="page">
+    <div class="no-print" style="display:flex;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap">
+      <select class="fc" id="rk-thn" style="width:auto" onchange="renderRekapKomp()"><option value="2025">2025</option><option value="2026" selected>2026</option></select>
+      <select class="fc" id="rk-grp" style="width:auto" onchange="renderRekapKomp()">
+        <option value="ops_bbm">BBM</option>
+        <option value="ops_ban">Biaya Ban</option>
+        <option value="ops_service_kecil">Service Kecil</option>
+        <option value="ops_service_besar">Service Besar</option>
+        <option value="ops_oli_mesin">Oli Mesin</option>
+        <option value="ops_perawatan_ac">Perawatan AC</option>
+        <option value="ops_suku_cadang">Suku Cadang</option>
+        <option value="ops_cuci_bus">Cuci Bus</option>
+        <option value="ops_retribusi">Retribusi</option>
+        <option value="pramudi_pramudi">Pramudi</option>
+        <option value="inv_asuransi_kend">Asuransi Kendaraan</option>
+        <option value="inv_pkb_stnk">PKB/STNK</option>
+        <option value="pendukung_pramugara">Pramugara/Pramugari</option>
+        <option value="pendukung_petugas_halte">Petugas Halte</option>
+        <option value="tiket_tiket_tunai">Pendapatan Tiket Tunai</option>
+        <option value="tiket_tiket_nontunai">Pendapatan Non Tunai</option>
+      </select>
+      <button class="btn btn-g" onclick="window.print()">🖨️ Cetak</button>
+    </div>
+    <div id="rekap-komp-content"></div>
   </div>
 
 </div><!-- /main -->
@@ -1014,11 +1042,30 @@ function buildRincianHTML(d, bpAMI, bpJTT, kuAMI, kuJTT){
 
   rows.push(`<tr>${cell('I.',false,true,8,'#e0e4f4')}${cell('Jumlah Biaya Pokok PT Anindya Mitra Internasional',false,true,8,'#e0e4f4')}${rpCell(bpAMI,true,'#e0e4f4')}</tr>`);
 
-  // ── A.2 PT JTT ──
+  // ── A.1.2 PT JTT — tampilkan komponen yg sama dengan label, nilai dari bpJTT ──
   rows.push(hd3('A 1.2  Biaya Pokok PT. Jogja Tugu Trans'));
   rows.push(hd4('A.1.2.1  Biaya Langsung'));
-  directGrps.forEach(({label})=>rows.push(subhd(label)));
+
+  // PT JTT komponen: tampilkan sama seperti AMI tapi isi dari data JTT (field terpisah)
+  // Karena user input bpJTT sebagai total, kita tampilkan komponen dengan nilai "-" kecuali yg diisi
+  const jttItems=[
+    {label:'a.  Biaya Investasi dan Administrasi Kendaraan'},
+    {label:'b.  Biaya Operasional dan Pemeliharaan'},
+    {label:'c.  Biaya Investasi Sistem Monitoring Keselamatan'},
+    {label:'d.  Biaya Awak Kendaraan Pramudi'},
+    {label:'e.  Biaya Peningkatan Fasilitas Armada'},
+    {label:'f.   Biaya Asuransi Penumpang'},
+  ];
+  // Distribusi proporsional bpJTT ke komponen (atau tampilkan total di akhir saja)
+  jttItems.forEach(({label})=>{
+    rows.push(`<tr><td style="${S};border:1px solid #ddd;padding:3px 8px;padding-left:32px;font-size:10pt">${label}</td><td style="${S};border:1px solid #ddd;padding:3px 8px;text-align:right;color:#999;font-size:10pt">Rp -</td></tr>`);
+  });
+
   rows.push(hd4('A.1.2.2  Biaya Tidak Langsung'));
+  [{label:'a.  Biaya Pegawai Kantor, Pool dan Bengkel'},{label:'b.  Biaya Pengelolaan'}].forEach(({label})=>{
+    rows.push(`<tr><td style="${S};border:1px solid #ddd;padding:3px 8px;padding-left:32px;font-size:10pt">${label}</td><td style="${S};border:1px solid #ddd;padding:3px 8px;text-align:right;color:#999;font-size:10pt">Rp -</td></tr>`);
+  });
+
   rows.push(`<tr>${cell('II.',false,true,8,'#e0e4f4')}${cell('Jumlah Biaya Pokok PT. Jogja Tugu Trans',false,true,8,'#e0e4f4')}${rpCell(bpJTT>0?bpJTT:null,true,'#e0e4f4')}</tr>`);
 
   // ── Rekap ──
@@ -1094,19 +1141,25 @@ function renderVfList(){
   const tb=document.getElementById('vf-tb');if(!tb)return;
   if(!data.length){tb.innerHTML='<tr><td colspan="9" class="tce" style="padding:22px;color:var(--t3)">Tidak ada data</td></tr>';return;}
   tb.innerHTML=data.map(p=>{
-    const sel=p.nilai_disetujui!==null?p.nilai_disetujui-p.nilai_pengajuan:null;
+    // nilai_disetujui sudah berupa SUBSIDI yang benar (bpV+7%+pdV-ppV)
+    const diset=p.nilai_disetujui;
+    const sel=diset!==null&&diset!==undefined ? diset-p.nilai_pengajuan : null;
     const jS=(p.selisih_detail||[]).length;
+    const selColor=sel===null?'inherit':sel<0?'var(--red)':'var(--green)';
+    const selTxt=sel!==null?(sel>=0?'+':'')+fmtRp(Math.abs(sel)):'–';
     return`<tr>
       <td class="tm">${p.no}</td>
       <td><span class="badge ${p.jenis==='Bus Listrik'?'bg':'bp'}">${p.jenis}</span></td>
       <td>${namaBulan(p.bulan)} ${p.tahun}</td>
       <td class="tm tr">${fmtRp(p.nilai_pengajuan)}</td>
-      <td class="tm tr">${p.nilai_disetujui!==null?fmtRp(p.nilai_disetujui):'–'}</td>
-      <td class="tm tr" style="color:${sel===null?'inherit':sel<0?'var(--red)':'var(--green)'}">
-        ${sel!==null?(sel>=0?'+':'')+fmtRp(Math.abs(sel)):'–'}</td>
+      <td class="tm tr" style="font-weight:600;color:var(--p)">${diset!==null&&diset!==undefined?fmtRp(diset):'–'}</td>
+      <td class="tm tr" style="color:${selColor};font-weight:700">${selTxt}</td>
       <td class="tce">${jS?`<span class="badge bo">${jS}</span>`:'–'}</td>
       <td>${badgeSt(p.status)}</td>
-      <td><button class="btn btn-p btn-sm" onclick="openVerif('${p.id}')">${p.status==='Menunggu'?'✅ Verif':'👁 Detail'}</button></td>
+      <td style="display:flex;gap:4px">
+        <button class="btn btn-p btn-sm" onclick="openVerif('${p.id}')">${p.status==='Menunggu'?'✅ Verif':'👁 Detail'}</button>
+        <button class="btn btn-g btn-sm" onclick="suratFromRecord('${p.id}')">📄</button>
+      </td>
     </tr>`;
   }).join('');
 }
@@ -1275,7 +1328,8 @@ function renderDaftar(){
   const tb=document.getElementById('df-tb');if(!tb)return;
   if(!data.length){tb.innerHTML='<tr><td colspan="10" class="tce" style="padding:22px;color:var(--t3)">Tidak ada data</td></tr>';return;}
   tb.innerHTML=data.map((p,i)=>{
-    const sel=p.nilai_disetujui!==null?p.nilai_disetujui-p.nilai_pengajuan:null;
+    const diset=p.nilai_disetujui;
+    const sel=diset!=null ? diset-p.nilai_pengajuan : null;
     return`<tr>
       <td class="tce" style="color:var(--t3);font-size:11px">${i+1}</td>
       <td class="tm">${p.no}</td>
@@ -1283,7 +1337,7 @@ function renderDaftar(){
       <td>${namaBulan(p.bulan)} ${p.tahun}</td>
       <td style="font-size:12px">${p.pj||'–'}</td>
       <td class="tm tr">${fmtRp(p.nilai_pengajuan)}</td>
-      <td class="tm tr">${p.nilai_disetujui!==null?fmtRp(p.nilai_disetujui):'–'}</td>
+      <td class="tm tr" style="color:var(--p);font-weight:600">${diset!=null?fmtRp(diset):'–'}</td>
       <td class="tm tr" style="font-weight:700;color:${sel===null?'inherit':sel<0?'var(--red)':'var(--green)'}">
         ${sel!==null?(sel>=0?'+':'')+fmtRp(Math.abs(sel)):'–'}</td>
       <td>${badgeSt(p.status)}</td>
@@ -1313,15 +1367,16 @@ function flt(bArr,t){return allData.filter(p=>bArr.includes(p.bulan)&&p.tahun==t
 function buildLapTable(data,title){
   if(!data.length)return`<div class="gc"><div class="gcb tce" style="padding:40px;color:var(--t3)">📂 Tidak ada data pada periode ini</div></div>`;
   const totP=data.reduce((s,p)=>s+p.nilai_pengajuan,0);
-  const vD=data.filter(p=>p.nilai_disetujui!==null);
-  const totD=vD.reduce((s,p)=>s+p.nilai_disetujui,0);
+  const vD=data.filter(p=>p.nilai_disetujui!=null);
+  const totD=vD.reduce((s,p)=>s+(p.nilai_disetujui||0),0);
   const allSel=data.flatMap(p=>(p.selisih_detail||[]).map(s=>({...s,no:p.no,periode:namaBulan(p.bulan)+' '+p.tahun})));
   let html=`<div class="gc" style="margin-bottom:14px">
     <div class="gch" style="background:linear-gradient(135deg,var(--p),var(--bl))"><span style="font-size:16px;color:#fff">📋</span><div class="gct" style="color:#fff">${title}</div></div>
     <div style="overflow-x:auto"><table>
       <thead><tr><th>No Pengajuan</th><th>Jenis</th><th>Periode</th><th>PJ</th><th>Tgl Verif</th><th>Nilai Diajukan</th><th>Nilai Disetujui</th><th>Selisih</th><th>Komp.</th><th>Status</th><th>Aksi</th></tr></thead>
       <tbody>${data.map(p=>{
-        const sel=p.nilai_disetujui!==null?p.nilai_disetujui-p.nilai_pengajuan:null;
+        const diset=p.nilai_disetujui;
+        const sel=diset!=null ? diset-p.nilai_pengajuan : null;
         const jS=(p.selisih_detail||[]).length;
         return`<tr>
           <td class="tm">${p.no}</td>
@@ -1330,7 +1385,7 @@ function buildLapTable(data,title){
           <td style="font-size:12px">${p.pj||'–'}</td>
           <td style="font-size:12px">${p.tgl_verif||'–'}</td>
           <td class="tm tr">${fmtRp(p.nilai_pengajuan)}</td>
-          <td class="tm tr">${p.nilai_disetujui!==null?fmtRp(p.nilai_disetujui):'–'}</td>
+          <td class="tm tr" style="color:var(--p);font-weight:600">${diset!=null?fmtRp(diset):'–'}</td>
           <td class="tm tr" style="font-weight:700;color:${sel===null?'inherit':sel<0?'var(--red)':'var(--green)'}">
             ${sel!==null?(sel>=0?'+':'')+fmtRp(Math.abs(sel)):'–'}</td>
           <td class="tce">${jS?`<span class="badge bo">${jS}</span>`:'–'}</td>
@@ -1430,7 +1485,7 @@ const PM={
   'laporan-bulanan':['Laporan Bulanan 📅','Ringkasan per bulan'],
   'laporan-triwulan':['Laporan Triwulan 📆','Rekapitulasi per triwulan'],
   'laporan-semester':['Laporan Semester 🗓️','Rekapitulasi per semester'],
-  'laporan-tahunan':['Laporan Tahunan 📁','Rekapitulasi satu tahun'],
+  'rekap-komponen':['Rekap Komponen 📈','Rekap nilai per komponen per bulan dalam satu tahun'],
 };
 let curPage='dashboard';
 function showPage(id){
@@ -1449,11 +1504,103 @@ function showPage(id){
   if(id==='laporan-triwulan')renderLapTriwulan();
   if(id==='laporan-semester')renderLapSemester();
   if(id==='laporan-tahunan')renderLapTahunan();
+  if(id==='rekap-komponen')renderRekapKomp();
 }
 function renderCurrentPage(){
   if(curPage==='dashboard')updateStats();
   else if(curPage==='hasil-verifikasi')renderVfList();
   else if(curPage==='daftar-pengajuan')renderDaftar();
+  else if(curPage==='rekap-komponen')renderRekapKomp();
+}
+
+/* ══════════════════════════════════════
+   REKAP KOMPONEN PER BULAN
+══════════════════════════════════════ */
+function renderRekapKomp(){
+  const thn=document.getElementById('rk-thn')?.value||2026;
+  const grpKey=document.getElementById('rk-grp')?.value||'ops_bbm';
+  const [grp,key]=grpKey.split('_');
+  // cari label komponen
+  const kompItem=(KOMP[grp]||[]).find(x=>x.k===key);
+  const label=kompItem?.l||grpKey;
+  const container=document.getElementById('rekap-komp-content');
+  if(!container)return;
+
+  // data per bulan
+  const bulanData=[];
+  let grandTotal=0;
+  for(let b=1;b<=12;b++){
+    const pengajuanBulan=allData.filter(p=>p.bulan==b&&p.tahun==thn);
+    let totalBulan=0;
+    const detail=[];
+    pengajuanBulan.forEach(p=>{
+      const item=p.komp_data?.[grp]?.[key];
+      if(!item)return;
+      totalBulan+=item.total||0;
+      if(item.details?.length){
+        item.details.forEach(r=>{
+          const t=(parseFloat(r.qty)||0)*(parseFloat(r.hs)||0);
+          if(t>0||r.ket) detail.push({ket:r.ket,qty:r.qty,sat:r.sat,hs:r.hs,tot:t,no:p.no});
+        });
+      }
+    });
+    grandTotal+=totalBulan;
+    bulanData.push({b,totalBulan,detail,hasPengajuan:pengajuanBulan.length>0});
+  }
+
+  const summaryRows=bulanData.map(({b,totalBulan,hasPengajuan})=>{
+    const bg=totalBulan>0?'':'rgba(0,0,0,.02)';
+    return`<tr style="background:${bg}">
+      <td style="font-weight:600">${namaBulan(b)}</td>
+      <td class="tce"><span class="badge ${hasPengajuan?totalBulan>0?'bp':'bgr':'bgr'}" style="font-size:10px">${hasPengajuan?'Ada':'–'}</span></td>
+      <td class="tm tr" style="color:${totalBulan>0?'var(--t)':'var(--t3)'}">${totalBulan>0?fmtRp(totalBulan):'–'}</td>
+    </tr>`;
+  }).join('');
+
+  // detail rows per bulan (expandable)
+  const detailRows=bulanData.filter(x=>x.detail.length>0).map(({b,detail})=>`
+    <div class="gc" style="margin-bottom:10px">
+      <div class="gch" style="background:rgba(124,111,247,.07)">
+        <span style="font-size:14px">📅</span>
+        <div class="gct">${namaBulan(b)} ${thn}</div>
+        <div style="margin-left:auto;font-family:'DM Mono',monospace;font-size:12px;color:var(--p);font-weight:700">${fmtRp(detail.reduce((s,r)=>s+r.tot,0))}</div>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>No Pengajuan</th><th>Keterangan</th><th>QTY</th><th>Satuan</th><th>Harga Satuan</th><th>Total</th></tr></thead>
+          <tbody>${detail.map(r=>`<tr>
+            <td class="tm" style="font-size:11px">${r.no}</td>
+            <td>${r.ket||'–'}</td>
+            <td class="tm tr">${fmtNum(r.qty)}</td>
+            <td><span class="badge bgr" style="font-size:10px">${r.sat||'–'}</span></td>
+            <td class="tm tr">${fmtRp(r.hs)}</td>
+            <td class="tm tr" style="font-weight:700;color:var(--p)">${fmtRp(r.tot)}</td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>`).join('');
+
+  container.innerHTML=`
+    <div class="gc" style="margin-bottom:14px">
+      <div class="gch" style="background:linear-gradient(135deg,var(--p),var(--bl))">
+        <span style="color:#fff;font-size:16px">📈</span>
+        <div class="gct" style="color:#fff">Rekap ${label} — Tahun ${thn}</div>
+        <div style="margin-left:auto;font-size:12px;color:rgba(255,255,255,.8)">Total: ${fmtRp(grandTotal)}</div>
+      </div>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Bulan</th><th>Status Pengajuan</th><th>Total Nilai</th></tr></thead>
+          <tbody>${summaryRows}</tbody>
+          <tfoot>
+            <tr style="background:rgba(124,111,247,.08);font-weight:700">
+              <td colspan="2" style="padding:10px 11px">TOTAL KESELURUHAN ${thn}</td>
+              <td class="tm tr" style="color:var(--p);font-size:14px;padding:10px 11px">${fmtRp(grandTotal)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+    ${detailRows?`<div style="font-weight:700;font-size:13px;color:var(--t);margin-bottom:10px">📋 Rincian Detail per Bulan</div>${detailRows}`:''}`;
 }
 
 /* ══════════════════════════════════════
