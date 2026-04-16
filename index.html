@@ -388,7 +388,7 @@ tbody tr:hover{background:rgba(255,255,255,.46)}
     </div>
     <div class="gc">
       <div class="gch"><span style="font-size:16px">📋</span><div class="gct">Daftar Pengajuan</div><div style="margin-left:auto"><button class="btn btn-g btn-sm" onclick="renderVfList()">🔄</button></div></div>
-      <div style="overflow-x:auto"><table><thead><tr><th>No Pengajuan</th><th>Jenis</th><th>Periode</th><th>Nilai Diajukan</th><th>Nilai Disetujui</th><th>Selisih</th><th>Komp.</th><th>Status</th><th>Aksi</th></tr></thead>
+      <div style="overflow-x:auto"><table><thead><tr><th>No Pengajuan</th><th>Jenis</th><th>Periode</th><th>Nilai Diajukan</th><th>Nilai Disetujui</th><th>Tidak Dicairkan</th><th>Komp.</th><th>Status</th><th>Aksi</th></tr></thead>
       <tbody id="vf-tb"><tr><td colspan="9" class="tce" style="padding:22px;color:var(--t3)">Memuat...</td></tr></tbody></table></div>
     </div>
   </div>
@@ -405,7 +405,7 @@ tbody tr:hover{background:rgba(255,255,255,.46)}
         <select class="fc" id="df-thn" style="width:auto" onchange="renderDaftar()"><option value="">Semua Tahun</option><option value="2025">2025</option><option value="2026">2026</option></select>
         <select class="fc" id="df-st" style="width:auto" onchange="renderDaftar()"><option value="">Semua Status</option><option value="Menunggu">Menunggu</option><option value="Terverifikasi">Terverifikasi</option><option value="Revisi">Revisi</option></select>
       </div>
-      <div style="overflow-x:auto"><table><thead><tr><th>#</th><th>No Pengajuan</th><th>Jenis</th><th>Periode</th><th>PJ</th><th>Nilai Diajukan</th><th>Disetujui</th><th>Selisih</th><th>Status</th><th>Aksi</th></tr></thead>
+      <div style="overflow-x:auto"><table><thead><tr><th>#</th><th>No Pengajuan</th><th>Jenis</th><th>Periode</th><th>PJ</th><th>Nilai Diajukan</th><th>Disetujui</th><th>Tidak Dicairkan</th><th>Status</th><th>Aksi</th></tr></thead>
       <tbody id="df-tb"><tr><td colspan="10" class="tce" style="padding:22px;color:var(--t3)">Memuat...</td></tr></tbody></table></div>
     </div>
   </div>
@@ -1141,19 +1141,18 @@ function renderVfList(){
   const tb=document.getElementById('vf-tb');if(!tb)return;
   if(!data.length){tb.innerHTML='<tr><td colspan="9" class="tce" style="padding:22px;color:var(--t3)">Tidak ada data</td></tr>';return;}
   tb.innerHTML=data.map(p=>{
-    // nilai_disetujui sudah berupa SUBSIDI yang benar (bpV+7%+pdV-ppV)
     const diset=p.nilai_disetujui;
-    const sel=diset!==null&&diset!==undefined ? diset-p.nilai_pengajuan : null;
+    // Selisih = nilai yang tidak dicairkan (potongan dari Dishub)
+    const potong=p.selisih_tidak_dicairkan||0;
     const jS=(p.selisih_detail||[]).length;
-    const selColor=sel===null?'inherit':sel<0?'var(--red)':'var(--green)';
-    const selTxt=sel!==null?(sel>=0?'+':'')+fmtRp(Math.abs(sel)):'–';
     return`<tr>
       <td class="tm">${p.no}</td>
       <td><span class="badge ${p.jenis==='Bus Listrik'?'bg':'bp'}">${p.jenis}</span></td>
       <td>${namaBulan(p.bulan)} ${p.tahun}</td>
       <td class="tm tr">${fmtRp(p.nilai_pengajuan)}</td>
-      <td class="tm tr" style="font-weight:600;color:var(--p)">${diset!==null&&diset!==undefined?fmtRp(diset):'–'}</td>
-      <td class="tm tr" style="color:${selColor};font-weight:700">${selTxt}</td>
+      <td class="tm tr" style="font-weight:600;color:var(--p)">${diset!=null?fmtRp(diset):'–'}</td>
+      <td class="tm tr" style="font-weight:700;color:${potong>0?'var(--red)':diset!=null?'var(--green)':'inherit'}">
+        ${diset!=null?(potong>0?'- '+fmtRp(potong):'Rp 0 ✓'):'–'}</td>
       <td class="tce">${jS?`<span class="badge bo">${jS}</span>`:'–'}</td>
       <td>${badgeSt(p.status)}</td>
       <td style="display:flex;gap:4px">
@@ -1222,7 +1221,8 @@ function openVerif(id){
       <div class="sr"><span class="sl2">Biaya Pendukung Disetujui</span><span class="sv2" id="vv-pd">–</span></div>
       <div class="sr"><span class="sl2">Pendapatan Disetujui</span><span class="sv2" id="vv-pp">–</span></div>
       <div class="sr" style="border-top:1.5px solid rgba(249,115,22,.3);margin-top:4px;padding-top:8px"><span class="sl2" style="font-weight:700;color:var(--orange)">Subsidi Disetujui</span><span class="sv2" style="color:var(--orange);font-size:15px" id="vv-tot">–</span></div>
-      <div class="sr"><span class="sl2">Selisih vs Diajukan</span><span class="sv2" id="vv-sel">–</span></div>
+      <div class="sr"><span class="sl2">Subsidi Cair ke PT AMI</span><span class="sv2" id="vv-sel" style="color:var(--p)">–</span></div>
+      <div class="sr"><span class="sl2" style="color:var(--red)">Tidak Dicairkan Dishub</span><span class="sv2" id="vv-potong" style="color:var(--red)">–</span></div>
       <div class="sr"><span class="sl2">Komponen Berselisih</span><span class="sv2" id="vv-jml">–</span></div>
     </div>
   </div>
@@ -1247,37 +1247,71 @@ function recalcVRow(g,k,orig){
 }
 function recalcVTotal(){
   const p=allData.find(x=>x.id===curVerifId);if(!p)return;
-  // Hitung per grup dengan rumus subsidi yang benar
-  let bpV=0, pdV=0, ppV=0, jml=0;
+
+  // Akumulasi nilai disetujui per kategori (hanya AMI dari komp_data)
+  let bpAMI_V=0, pdV=0, ppV=0, jml=0;
+  // Selisih total = jumlah potongan (diajukan - disetujui) yang DIPOTONG (selisih negatif = dikurangi)
+  let totalPotongan=0;
+
   Object.keys(p.komp_data||{}).forEach(g=>{
     Object.keys(p.komp_data[g]).forEach(key=>{
       const el=document.getElementById(`vv-${g}-${key}`);
       if(!el) return;
       const val=parseFloat(el.value||0);
       const orig=p.komp_data[g][key].total||0;
-      if(Math.abs(val-orig)>0) jml++;
-      // Kategorikan ke grup yang benar
-      if(BG.includes(g)) bpV+=val;
+      const diff=val-orig; // negatif = dipotong
+      if(Math.abs(diff)>0.01) jml++;
+      if(diff<0) totalPotongan+=Math.abs(diff); // hanya hitung potongan (yang tidak dicairkan)
+      if(BG.includes(g)) bpAMI_V+=val;
       else if(PG.includes(g)) pdV+=val;
       else if(PPG.includes(g)) ppV+=val;
     });
   });
-  const kuV=bpV*0.07;
-  const subsidiV=bpV+kuV+pdV-ppV;
-  const eT=document.getElementById('vv-tot');if(eT)eT.textContent=fmtRp(subsidiV);
-  // Detail breakdown
-  const eBp=document.getElementById('vv-bp');if(eBp)eBp.textContent=fmtRp(bpV);
-  const eKu=document.getElementById('vv-ku');if(eKu)eKu.textContent=fmtRp(kuV);
+
+  // BP JTT tetap nilai asli pengajuan (tidak diverifikasi per komponen)
+  const bpJTT_asli = p.biaya_pokok_jtt||0;
+  const bpTotal_V = bpAMI_V + bpJTT_asli;
+  const kuAMI_V = bpAMI_V * 0.07;
+  const kuJTT_asli = bpJTT_asli * 0.07;
+  const kuTotal_V = kuAMI_V + kuJTT_asli;
+
+  // Subsidi disetujui = (BP total + Keuntungan total + Pendukung) - Pendapatan
+  const subsidiV = bpTotal_V + kuTotal_V + pdV - ppV;
+  // Nilai tidak dicairkan = jumlah potongan komponen AMI saja
+  const tidakDicairkan = totalPotongan;
+
+  // Update panel display
+  const eBp=document.getElementById('vv-bp');if(eBp)eBp.textContent=fmtRp(bpAMI_V)+' (AMI)';
+  const eKu=document.getElementById('vv-ku');if(eKu)eKu.textContent=fmtRp(kuTotal_V);
   const ePd=document.getElementById('vv-pd');if(ePd)ePd.textContent=fmtRp(pdV);
   const ePp=document.getElementById('vv-pp');if(ePp)ePp.textContent=fmtRp(ppV);
-  const sel=subsidiV-p.nilai_pengajuan;
-  const eS=document.getElementById('vv-sel');if(eS){eS.textContent=(sel>=0?'+':'')+fmtRp(Math.abs(sel));eS.style.color=sel<0?'var(--red)':sel>0?'var(--green)':'inherit';eS.style.fontWeight='700';}
-  const eJ=document.getElementById('vv-jml');if(eJ)eJ.textContent=jml+' komponen';
+  const eT=document.getElementById('vv-tot');if(eT)eT.textContent=fmtRp(subsidiV);
+
+  const eS=document.getElementById('vv-sel');
+  if(eS){
+    eS.textContent=fmtRp(subsidiV);
+    eS.style.color='var(--p)';
+    eS.style.fontWeight='700';
+  }
+  const ePotong=document.getElementById('vv-potong');
+  if(ePotong){
+    if(tidakDicairkan>0){
+      ePotong.textContent='- '+fmtRp(tidakDicairkan);
+      ePotong.style.color='var(--red)';
+    } else {
+      ePotong.textContent='Rp 0';
+      ePotong.style.color='var(--green)';
+    }
+    ePotong.style.fontWeight='700';
+  }
+  const eJ=document.getElementById('vv-jml');if(eJ)eJ.textContent=jml+' komponen berselisih';
+  window._verifCalc={bpAMI_V,bpJTT_asli,kuTotal_V,pdV,ppV,subsidiV,tidakDicairkan};
 }
 async function saveVerif(status){
   const p=allData.find(x=>x.id===curVerifId);if(!p)return;
   const vd={},sel=[];
-  let bpV=0,pdV=0,ppV=0;
+  let bpAMI_V=0,pdV=0,ppV=0;
+
   Object.keys(p.komp_data||{}).forEach(g=>{
     vd[g]={};
     Object.keys(p.komp_data[g]).forEach(key=>{
@@ -1286,23 +1320,36 @@ async function saveVerif(status){
       if(el){
         const val=parseFloat(el.value||0),ket=ketEl?.value||'',orig=p.komp_data[g][key].total||0,diff=val-orig;
         vd[g][key]={nilaiDisetujui:val,keteranganSelisih:ket};
-        if(Math.abs(diff)>0)sel.push({group:g,key,label:p.komp_data[g][key].label,satuan:p.komp_data[g][key].satuan,nilaiDiajukan:orig,nilaiDisetujui:val,selisih:diff,keterangan:ket});
-        // Akumulasi per kategori
-        if(BG.includes(g)) bpV+=val;
+        if(Math.abs(diff)>0.01) sel.push({
+          group:g,key,label:p.komp_data[g][key].label,
+          satuan:p.komp_data[g][key].satuan,
+          nilaiDiajukan:orig,nilaiDisetujui:val,selisih:diff,keterangan:ket
+        });
+        if(BG.includes(g)) bpAMI_V+=val;
         else if(PG.includes(g)) pdV+=val;
         else if(PPG.includes(g)) ppV+=val;
       }
     });
   });
-  const kuV=bpV*0.07;
-  const subsidiV=bpV+kuV+pdV-ppV;
+
+  const bpJTT_asli=p.biaya_pokok_jtt||0;
+  const bpTotal_V=bpAMI_V+bpJTT_asli;
+  const kuAMI_V=bpAMI_V*0.07;
+  const kuJTT_asli=bpJTT_asli*0.07;
+  const kuTotal_V=kuAMI_V+kuJTT_asli;
+  // Subsidi = Biaya + Keuntungan + Pendukung - Pendapatan
+  const subsidiV=bpTotal_V+kuTotal_V+pdV-ppV;
+  // Selisih = jumlah komponen yang DIPOTONG (tidak dicairkan)
+  const tidakDicairkan=sel.filter(s=>s.selisih<0).reduce((sum,s)=>sum+Math.abs(s.selisih),0);
+
   const catatan=document.getElementById('vv-catatan')?.value||'';
   const tglV=new Date().toISOString().split('T')[0];
   const{error}=await supa.from('pengajuan').update({
     status,
     nilai_disetujui:subsidiV,
-    biaya_pokok_verif:bpV,
-    keuntungan_verif:kuV,
+    selisih_tidak_dicairkan:tidakDicairkan,
+    biaya_pokok_verif:bpAMI_V,
+    keuntungan_verif:kuTotal_V,
     pendukung_verif:pdV,
     pendapatan_verif:ppV,
     verif_detail:vd,selisih_detail:sel,
@@ -1310,7 +1357,13 @@ async function saveVerif(status){
   }).eq('id',curVerifId);
   if(error){toast('Gagal: '+error.message,'error');return;}
   const idx=allData.findIndex(x=>x.id===curVerifId);
-  if(idx>=0)allData[idx]={...allData[idx],status,nilai_disetujui:subsidiV,biaya_pokok_verif:bpV,keuntungan_verif:kuV,pendukung_verif:pdV,pendapatan_verif:ppV,verif_detail:vd,selisih_detail:sel,catatan_verif:catatan,tgl_verif:tglV};
+  if(idx>=0) allData[idx]={
+    ...allData[idx],status,
+    nilai_disetujui:subsidiV,selisih_tidak_dicairkan:tidakDicairkan,
+    biaya_pokok_verif:bpAMI_V,keuntungan_verif:kuTotal_V,
+    pendukung_verif:pdV,pendapatan_verif:ppV,
+    verif_detail:vd,selisih_detail:sel,catatan_verif:catatan,tgl_verif:tglV
+  };
   closeModal('modal-verif');updateStats();renderVfList();
   toast(`✅ ${p.no} ${status==='Terverifikasi'?'disetujui':'ditandai Revisi'}!`,'success');
 }
@@ -1329,7 +1382,7 @@ function renderDaftar(){
   if(!data.length){tb.innerHTML='<tr><td colspan="10" class="tce" style="padding:22px;color:var(--t3)">Tidak ada data</td></tr>';return;}
   tb.innerHTML=data.map((p,i)=>{
     const diset=p.nilai_disetujui;
-    const sel=diset!=null ? diset-p.nilai_pengajuan : null;
+    const potong=p.selisih_tidak_dicairkan||0;
     return`<tr>
       <td class="tce" style="color:var(--t3);font-size:11px">${i+1}</td>
       <td class="tm">${p.no}</td>
@@ -1338,8 +1391,8 @@ function renderDaftar(){
       <td style="font-size:12px">${p.pj||'–'}</td>
       <td class="tm tr">${fmtRp(p.nilai_pengajuan)}</td>
       <td class="tm tr" style="color:var(--p);font-weight:600">${diset!=null?fmtRp(diset):'–'}</td>
-      <td class="tm tr" style="font-weight:700;color:${sel===null?'inherit':sel<0?'var(--red)':'var(--green)'}">
-        ${sel!==null?(sel>=0?'+':'')+fmtRp(Math.abs(sel)):'–'}</td>
+      <td class="tm tr" style="font-weight:700;color:${potong>0?'var(--red)':diset!=null?'var(--green)':'inherit'}">
+        ${diset!=null?(potong>0?'- '+fmtRp(potong):'Rp 0 ✓'):'–'}</td>
       <td>${badgeSt(p.status)}</td>
       <td style="display:flex;gap:4px;flex-wrap:nowrap">
         <button class="btn btn-p btn-sm" onclick="openVerif('${p.id}')">✅</button>
@@ -1373,10 +1426,10 @@ function buildLapTable(data,title){
   let html=`<div class="gc" style="margin-bottom:14px">
     <div class="gch" style="background:linear-gradient(135deg,var(--p),var(--bl))"><span style="font-size:16px;color:#fff">📋</span><div class="gct" style="color:#fff">${title}</div></div>
     <div style="overflow-x:auto"><table>
-      <thead><tr><th>No Pengajuan</th><th>Jenis</th><th>Periode</th><th>PJ</th><th>Tgl Verif</th><th>Nilai Diajukan</th><th>Nilai Disetujui</th><th>Selisih</th><th>Komp.</th><th>Status</th><th>Aksi</th></tr></thead>
+      <thead><tr><th>No Pengajuan</th><th>Jenis</th><th>Periode</th><th>PJ</th><th>Tgl Verif</th><th>Nilai Diajukan</th><th>Nilai Disetujui</th><th>Tidak Dicairkan</th><th>Komp.</th><th>Status</th><th>Aksi</th></tr></thead>
       <tbody>${data.map(p=>{
         const diset=p.nilai_disetujui;
-        const sel=diset!=null ? diset-p.nilai_pengajuan : null;
+        const potong=p.selisih_tidak_dicairkan||0;
         const jS=(p.selisih_detail||[]).length;
         return`<tr>
           <td class="tm">${p.no}</td>
@@ -1386,8 +1439,8 @@ function buildLapTable(data,title){
           <td style="font-size:12px">${p.tgl_verif||'–'}</td>
           <td class="tm tr">${fmtRp(p.nilai_pengajuan)}</td>
           <td class="tm tr" style="color:var(--p);font-weight:600">${diset!=null?fmtRp(diset):'–'}</td>
-          <td class="tm tr" style="font-weight:700;color:${sel===null?'inherit':sel<0?'var(--red)':'var(--green)'}">
-            ${sel!==null?(sel>=0?'+':'')+fmtRp(Math.abs(sel)):'–'}</td>
+          <td class="tm tr" style="font-weight:700;color:${potong>0?'var(--red)':diset!=null?'var(--green)':'inherit'}">
+            ${diset!=null?(potong>0?'- '+fmtRp(potong):'Rp 0 ✓'):'–'}</td>
           <td class="tce">${jS?`<span class="badge bo">${jS}</span>`:'–'}</td>
           <td>${badgeSt(p.status)}</td>
           <td><button class="btn btn-g btn-sm" onclick="suratFromRecord('${p.id}')">📄 Surat</button></td>
